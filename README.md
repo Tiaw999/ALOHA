@@ -1,2 +1,2 @@
 # ALOHA
-Application for store management
+An application for store management
