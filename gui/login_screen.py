@@ -62,7 +62,7 @@ class LoginScreen(tk.Frame):
             # Navigate to the correct home screen
             if role == "Owner":
                 print("Go to Owner Home Screen")
-                # self.master.switch_screen(OwnerHome, store)
+                self.master.switch_screen(OwnerHome, store)
             elif role == "Manager":
                 print("Go to Manager Home Screen")
                 # self.master.switch_screen(ManagerHome, store)
