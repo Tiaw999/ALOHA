@@ -2,23 +2,33 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
-import db  # Import your db module here
+import db  # Make sure to import the db module where get_stores is defined
 
-class LoginScreen(tk.Frame):  # Ensure it inherits from tk.Frame
+# Import your home screen modules
+from gui.owner_home import OwnerHome
+# from gui.manager_home import ManagerHome
+# from gui.employee_home import EmployeeHome
+
+class LoginScreen(tk.Frame):
     def __init__(self, master):
-        super().__init__(master)  # Call the initializer of tk.Frame
-        print("Initializing Login Screen")  # Debugging line
+        super().__init__(master)
         self.master = master
         self.master.configure(bg="#f0f0f0")
 
         self.frame = ttk.Frame(master, padding="30 30 30 30")
-        self.frame.pack(expand=True)  # Pack the frame here instead of the LoginScreen itself
+        self.frame.pack(expand=True)
 
+        # Create widgets
         ttk.Label(self.frame, text="Store Name:").grid(column=0, row=0, sticky=tk.W, pady=5)
-        self.store_entry = ttk.Entry(self.frame, width=30)
-        self.store_entry.grid(column=1, row=0, pady=5)
 
-        ttk.Label(self.frame, text="Username:").grid(column=0, row=1, sticky=tk.W, pady=5)
+        # Fetch store names from the database and populate the dropdown
+        self.store_names = db.get_stores()  # Call the get_stores function from db.py
+        self.store_var = tk.StringVar()  # Variable to store the selected store
+
+        self.store_dropdown = ttk.Combobox(self.frame, textvariable=self.store_var, values=self.store_names)
+        self.store_dropdown.grid(column=1, row=0, pady=5)
+
+        ttk.Label(self.frame, text="Name:").grid(column=0, row=1, sticky=tk.W, pady=5)
         self.user_entry = ttk.Entry(self.frame, width=30)
         self.user_entry.grid(column=1, row=1, pady=5)
 
@@ -33,13 +43,20 @@ class LoginScreen(tk.Frame):  # Ensure it inherits from tk.Frame
             child.grid_configure(padx=10)
 
     def login(self):
-        store = self.store_entry.get()
+        store = self.store_var.get()
         user = self.user_entry.get()
         password = self.pass_entry.get()
 
-        role = db.authenticate_user(store, user, password)  # Assuming authenticate_user is defined in db.py
+        role = db.authenticate_user(store, user, password)  # Assuming you have this function in db.py
         if role:
             messagebox.showinfo("Login Success", f"Welcome {role}: {user}")
-            # Transition to owner_home or other screens here
+
+            # Switch to the appropriate home screen based on the role
+            if role == "Owner":
+                self.master.switch_screen(OwnerHome, store)
+            elif role == "Manager":
+                self.master.switch_screen(ManagerHome, store)
+            else:
+                self.master.switch_screen(EmployeeHome, store)
         else:
             messagebox.showerror("Login Failed", "Invalid credentials. Please try again.")

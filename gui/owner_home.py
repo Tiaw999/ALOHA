@@ -1,5 +1,6 @@
 # gui/owner_home.py
 import tkinter as tk
+from ttkbootstrap import ttk
 
 # Placeholder imports for navigation — you’ll create these screens soon
 # from gui.revenue_screen import RevenueScreen
@@ -20,11 +21,15 @@ class OwnerHome(tk.Frame):
         self.create_widgets()
 
     def create_widgets(self):
-        tk.Label(self, text=f"Owner Home - {self.store_name}", font=("Arial", 24)).pack(pady=20)
+        # Title Label
+        title_label = ttk.Label(self, text=f"Owner Home - {self.store_name}", font=("Arial", 24))
+        title_label.pack(pady=20)
 
-        button_frame = tk.Frame(self)
-        button_frame.pack(pady=10)
+        # Frame for Buttons
+        button_frame = ttk.Frame(self)
+        button_frame.pack(pady=10, padx=20)
 
+        # Create Button List
         buttons = [
             ("Revenue", self.go_to_revenue),
             ("Expenses", self.go_to_expenses),
@@ -36,11 +41,25 @@ class OwnerHome(tk.Frame):
             ("Invoices", self.go_to_invoices)
         ]
 
+        # Place buttons in grid with 2 columns
         for idx, (text, command) in enumerate(buttons):
-            btn = tk.Button(button_frame, text=text, width=15, command=command)
-            btn.grid(row=idx//2, column=idx%2, padx=10, pady=10)
+            btn = ttk.Button(button_frame, text=text, width=20, command=command)
+            btn.grid(row=idx // 2, column=idx % 2, padx=10, pady=10)
 
-        tk.Button(self, text="Back", command=self.go_back).pack(pady=20)
+        # Add Back button
+        back_button = ttk.Button(self, text="Back", command=self.go_back)
+        back_button.pack(pady=20)
+
+        # Make sure the columns in the grid expand properly
+        button_frame.grid_columnconfigure(0, weight=1)
+        button_frame.grid_columnconfigure(1, weight=1)
+
+        # Allow dynamic resizing of rows in the grid
+        button_frame.grid_rowconfigure(0, weight=1)
+        button_frame.grid_rowconfigure(1, weight=1)
+
+        # Force a redraw of widgets to resolve any rendering issues
+        self.update()
 
     def go_to_revenue(self):
         print("Go to Revenue Screen")
