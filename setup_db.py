@@ -28,13 +28,25 @@ def create_tables_and_sample_data():
         )
         cursor = conn.cursor()
 
-        # Table: users
+        # Table: STORES
         cursor.execute("""
-            CREATE TABLE IF NOT EXISTS users (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                username VARCHAR(50) UNIQUE NOT NULL,
+                    CREATE TABLE IF NOT EXISTS stores (
+                        storename VARCHAR(50) NOT NULL PRIMARY KEY,
+                        password VARCHAR(255)
+                    )
+                """)
+
+        # Table: STAFF
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS staff (
+                name VARCHAR(50) NOT NULL,
+                storename VARCHAR(50) NOT NULL,
+                hourlyrate DECIMAL(10, 2),
+                bonusrate DECIMAL(10, 2),
                 password VARCHAR(255) NOT NULL,
-                role ENUM('Owner', 'Manager', 'Employee') NOT NULL
+                role ENUM('Owner', 'Manager', 'Employee') NOT NULL,
+                PRIMARY KEY(name, storename),
+                FOREIGN KEY(storename) references stores(storename)
             )
         """)
 
@@ -42,9 +54,11 @@ def create_tables_and_sample_data():
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS expenses (
                 id INT AUTO_INCREMENT PRIMARY KEY,
-                expense_type VARCHAR(50),
-                amount DECIMAL(10, 2),
-                date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                storename VARCHAR(50),
+                expensetype VARCHAR(50),
+                expensevalue DECIMAL(10, 2),
+                date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(storename) references stores(storename)
             )
         """)
 
@@ -52,9 +66,12 @@ def create_tables_and_sample_data():
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS revenue (
                 id INT AUTO_INCREMENT PRIMARY KEY,
-                source VARCHAR(50),
-                amount DECIMAL(10, 2),
-                date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                storename VARCHAR(50),
+                reg DECIMAL(10, 2),
+                credit DECIMAL(10, 2),
+                cashinenvelope DECIMAL(10, 2),
+                date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(storename) references stores(storename)
             )
         """)
 
@@ -62,19 +79,27 @@ def create_tables_and_sample_data():
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS merchandise (
                 id INT AUTO_INCREMENT PRIMARY KEY,
-                name VARCHAR(100),
-                quantity INT,
-                price DECIMAL(10, 2)
+                storename VARCHAR(50),
+                date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                merchtype VARCHAR(255),
+                merchvalue DECIMAL(10, 2),
+                FOREIGN KEY(storename) references stores(storename)
             )
         """)
 
         # Table: invoices
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS invoices (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                customer_name VARCHAR(100),
-                total_amount DECIMAL(10, 2),
-                date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                invoicenum VARCHAR(255) PRIMARY KEY,
+                storename VARCHAR(50),
+                datereceived DATE,
+                company VARCHAR(100),
+                amount DECIMAL(10, 2),
+                duedate DATE,
+                paid BOOLEAN,
+                datepaid DATE,
+                paidwith ENUM('CREDIT', 'CASH'),
+                FOREIGN KEY(storename) references stores(storename)
             )
         """)
 
@@ -82,9 +107,12 @@ def create_tables_and_sample_data():
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS withdrawals (
                 id INT AUTO_INCREMENT PRIMARY KEY,
+                storename VARCHAR(50),
+                empname VARCHAR(50),
                 amount DECIMAL(10, 2),
-                reason VARCHAR(100),
-                date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                notes VARCHAR(100),
+                date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(empname, storename) references staff(name, storename)
             )
         """)
 
@@ -92,30 +120,42 @@ def create_tables_and_sample_data():
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS payroll (
                 id INT AUTO_INCREMENT PRIMARY KEY,
-                employee_name VARCHAR(100),
-                amount DECIMAL(10, 2),
-                date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                empname VARCHAR(50),
+                storename VARCHAR(50),
+                regularpay DECIMAL(10, 2),
+                bonus DECIMAL(10, 2),
+                paydate DATE,
+                FOREIGN KEY(empname, storename) references staff(name, storename)
             )
         """)
 
-        # Table: timesheets
+        # Table: timesheet
         cursor.execute("""
-            CREATE TABLE IF NOT EXISTS timesheets (
+            CREATE TABLE IF NOT EXISTS timesheet (
                 id INT AUTO_INCREMENT PRIMARY KEY,
-                employee_id INT,
+                storename VARCHAR(50),
+                empname VARCHAR(50),
                 clock_in DATETIME,
                 clock_out DATETIME,
-                FOREIGN KEY (employee_id) REFERENCES users(id)
+                regin DECIMAL(10, 2),
+                regout DECIMAL(10, 2),
+                FOREIGN KEY (empname, storename) REFERENCES staff(name, storename)
             )
         """)
 
-        # Sample Users
+        # Sample stores
         cursor.execute("""
-            INSERT IGNORE INTO users (username, password, role)
+            INSERT INTO stores (storename, password)
+            VALUES ('aloha', 'storepass1'), ('aloha2', 'storepass2'), ('aloha3', 'storepass3')
+        """)
+
+        # Sample staff
+        cursor.execute("""
+            INSERT IGNORE INTO staff (name, storename, hourlyrate, bonusrate, password, role)
             VALUES
-                ('owner1', 'password123', 'Owner'),
-                ('manager1', 'password123', 'Manager'),
-                ('employee1', 'password123', 'Employee')
+                ('owner1', 'aloha', '25', '0.03', 'password123', 'Owner'),
+                ('manager1', 'aloha2', '20', '.02', 'password123', 'Manager'),
+                ('employee1', 'aloha3', '15', '.01', 'password123', 'Employee')
         """)
 
         conn.commit()
