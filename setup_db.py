@@ -1,147 +1,130 @@
 # setup_db.py
-import sqlite3
+import mysql.connector
+from mysql.connector import Error
 
-DB_PATH = 'store_manager.db'
+# MySQL credentials
+HOST = 'localhost'
+USER = 'root'
+PASSWORD = 'Cooldaisy662'
 
-def create_tables():
-    with sqlite3.connect(DB_PATH) as conn:
+def create_database():
+    try:
+        conn = mysql.connector.connect(host=HOST, user=USER, password=PASSWORD)
+        cursor = conn.cursor()
+        cursor.execute("CREATE DATABASE IF NOT EXISTS store_manager")
+        print("Database 'store_manager' created or already exists.")
+        cursor.close()
+        conn.close()
+    except Error as e:
+        print(f"Error creating database: {e}")
+
+def create_tables_and_sample_data():
+    try:
+        conn = mysql.connector.connect(
+            host=HOST,
+            user=USER,
+            password=PASSWORD,
+            database='store_manager'
+        )
         cursor = conn.cursor()
 
-        # Owners Table
+        # Table: users
         cursor.execute("""
-            CREATE TABLE IF NOT EXISTS Owners (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                username TEXT UNIQUE NOT NULL,
-                password TEXT NOT NULL
+            CREATE TABLE IF NOT EXISTS users (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                username VARCHAR(50) UNIQUE NOT NULL,
+                password VARCHAR(255) NOT NULL,
+                role ENUM('Owner', 'Manager', 'Employee') NOT NULL
             )
         """)
 
-        # Managers Table
+        # Table: expenses
         cursor.execute("""
-            CREATE TABLE IF NOT EXISTS Managers (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                store_name TEXT NOT NULL,
-                username TEXT UNIQUE NOT NULL,
-                password TEXT NOT NULL
+            CREATE TABLE IF NOT EXISTS expenses (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                expense_type VARCHAR(50),
+                amount DECIMAL(10, 2),
+                date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
 
-        # Employees Table
+        # Table: revenue
         cursor.execute("""
-            CREATE TABLE IF NOT EXISTS Employees (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                store_name TEXT NOT NULL,
-                username TEXT UNIQUE NOT NULL,
-                password TEXT NOT NULL
+            CREATE TABLE IF NOT EXISTS revenue (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                source VARCHAR(50),
+                amount DECIMAL(10, 2),
+                date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
 
-        # Expenses Table
+        # Table: merchandise
         cursor.execute("""
-            CREATE TABLE IF NOT EXISTS Expenses (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                store_name TEXT NOT NULL,
-                expense_type TEXT NOT NULL,
-                amount REAL NOT NULL,
-                date TEXT DEFAULT CURRENT_DATE
+            CREATE TABLE IF NOT EXISTS merchandise (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(100),
+                quantity INT,
+                price DECIMAL(10, 2)
             )
         """)
 
-        # Revenue Table
+        # Table: invoices
         cursor.execute("""
-            CREATE TABLE IF NOT EXISTS Revenue (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                store_name TEXT NOT NULL,
-                revenue_type TEXT NOT NULL,
-                amount REAL NOT NULL,
-                date TEXT DEFAULT CURRENT_DATE
+            CREATE TABLE IF NOT EXISTS invoices (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                customer_name VARCHAR(100),
+                total_amount DECIMAL(10, 2),
+                date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
 
-        # Merchandise Table
+        # Table: withdrawals
         cursor.execute("""
-            CREATE TABLE IF NOT EXISTS Merchandise (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                store_name TEXT NOT NULL,
-                item_name TEXT NOT NULL,
-                quantity INTEGER NOT NULL,
-                price REAL NOT NULL
+            CREATE TABLE IF NOT EXISTS withdrawals (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                amount DECIMAL(10, 2),
+                reason VARCHAR(100),
+                date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
 
-        # Invoices Table
+        # Table: payroll
         cursor.execute("""
-            CREATE TABLE IF NOT EXISTS Invoices (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                store_name TEXT NOT NULL,
-                invoice_number TEXT NOT NULL,
-                amount REAL NOT NULL,
-                date TEXT DEFAULT CURRENT_DATE
+            CREATE TABLE IF NOT EXISTS payroll (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                employee_name VARCHAR(100),
+                amount DECIMAL(10, 2),
+                date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
 
-        # Withdrawals Table
+        # Table: timesheets
         cursor.execute("""
-            CREATE TABLE IF NOT EXISTS Withdrawals (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                store_name TEXT NOT NULL,
-                amount REAL NOT NULL,
-                date TEXT DEFAULT CURRENT_DATE
+            CREATE TABLE IF NOT EXISTS timesheets (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                employee_id INT,
+                clock_in DATETIME,
+                clock_out DATETIME,
+                FOREIGN KEY (employee_id) REFERENCES users(id)
             )
         """)
 
-        # Payroll Table
+        # Sample Users
         cursor.execute("""
-            CREATE TABLE IF NOT EXISTS Payroll (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                store_name TEXT NOT NULL,
-                employee_id INTEGER NOT NULL,
-                amount REAL NOT NULL,
-                date TEXT DEFAULT CURRENT_DATE,
-                FOREIGN KEY (employee_id) REFERENCES Employees(id)
-            )
-        """)
-
-        # Timesheet Table
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS Timesheet (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                employee_id INTEGER NOT NULL,
-                clock_in TEXT NOT NULL,
-                clock_out TEXT NOT NULL,
-                FOREIGN KEY (employee_id) REFERENCES Employees(id)
-            )
+            INSERT IGNORE INTO users (username, password, role)
+            VALUES
+                ('owner1', 'password123', 'Owner'),
+                ('manager1', 'password123', 'Manager'),
+                ('employee1', 'password123', 'Employee')
         """)
 
         conn.commit()
-        print("Tables created successfully.")
+        print("Tables created and sample data inserted.")
+        cursor.close()
+        conn.close()
+    except Error as e:
+        print(f"Error creating tables: {e}")
 
-def insert_sample_data():
-    with sqlite3.connect(DB_PATH) as conn:
-        cursor = conn.cursor()
-
-        # Sample Owner
-        cursor.execute("INSERT OR IGNORE INTO Owners (username, password) VALUES (?, ?)", ('owner1', 'pass123'))
-
-        # Sample Manager
-        cursor.execute("INSERT OR IGNORE INTO Managers (store_name, username, password) VALUES (?, ?, ?)",
-                       ('StoreA', 'manager1', 'pass123'))
-
-        # Sample Employee
-        cursor.execute("INSERT OR IGNORE INTO Employees (store_name, username, password) VALUES (?, ?, ?)",
-                       ('StoreA', 'employee1', 'pass123'))
-
-        # Sample Expenses
-        cursor.execute("INSERT INTO Expenses (store_name, expense_type, amount) VALUES (?, ?, ?)",
-                       ('StoreA', 'Utilities', 120.50))
-
-        # Sample Revenue
-        cursor.execute("INSERT INTO Revenue (store_name, revenue_type, amount) VALUES (?, ?, ?)",
-                       ('StoreA', 'Sales', 500.00))
-
-        conn.commit()
-        print("Sample data inserted successfully.")
-
-if __name__ == '__main__':
-    create_tables()
-    insert_sample_data()
+if __name__ == "__main__":
+    create_database()
+    create_tables_and_sample_data()
