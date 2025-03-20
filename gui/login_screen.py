@@ -1,75 +1,45 @@
-#gui/login_screen.py
-import sqlite3
+# gui/login_screen.py
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk
+from tkinter import messagebox
+import db  # Import your db module here
 
-# Placeholder imports — you'll create these files later
-# from gui.owner_home import OwnerHome
-# from gui.manager_home import ManagerHome
-# from gui.employee_home import EmployeeHome
-
-class LoginScreen(tk.Frame):
+class LoginScreen(tk.Frame):  # Ensure it inherits from tk.Frame
     def __init__(self, master):
-        super().__init__(master)
+        super().__init__(master)  # Call the initializer of tk.Frame
+        print("Initializing Login Screen")  # Debugging line
         self.master = master
+        self.master.configure(bg="#f0f0f0")
 
-        self.selected_role = tk.StringVar(value="Owner")
-        self.password_var = tk.StringVar()
-        self.store_var = tk.StringVar()
+        self.frame = ttk.Frame(master, padding="30 30 30 30")
+        self.frame.pack(expand=True)  # Pack the frame here instead of the LoginScreen itself
 
-        self.create_widgets()
+        ttk.Label(self.frame, text="Store Name:").grid(column=0, row=0, sticky=tk.W, pady=5)
+        self.store_entry = ttk.Entry(self.frame, width=30)
+        self.store_entry.grid(column=1, row=0, pady=5)
 
-    def create_widgets(self):
-        tk.Label(self, text="Welcome!", font=("Arial", 24)).pack(pady=20)
+        ttk.Label(self.frame, text="Username:").grid(column=0, row=1, sticky=tk.W, pady=5)
+        self.user_entry = ttk.Entry(self.frame, width=30)
+        self.user_entry.grid(column=1, row=1, pady=5)
 
-        # Store Dropdown
-        tk.Label(self, text="Select Store:").pack(pady=(10, 0))
-        self.store_dropdown = ttk.Combobox(self, textvariable=self.store_var, values=self.get_stores())
-        self.store_dropdown.pack(pady=5)
+        ttk.Label(self.frame, text="Password:").grid(column=0, row=2, sticky=tk.W, pady=5)
+        self.pass_entry = ttk.Entry(self.frame, show="*", width=30)
+        self.pass_entry.grid(column=1, row=2, pady=5)
 
-        # Role Buttons
-        tk.Label(self, text="Select Role:").pack(pady=(15, 0))
-        role_frame = tk.Frame(self)
-        role_frame.pack(pady=5)
+        self.login_button = ttk.Button(self.frame, text="Login", command=self.login)
+        self.login_button.grid(column=1, row=3, pady=20)
 
-        for role in ["Owner", "Manager", "Employee"]:
-            btn = tk.Radiobutton(role_frame, text=role, variable=self.selected_role, value=role)
-            btn.pack(side="left", padx=10)
-
-        # Password Entry
-        tk.Label(self, text="Password:").pack(pady=(15, 0))
-        tk.Entry(self, textvariable=self.password_var, show="*").pack(pady=5)
-
-        # Login Button
-        tk.Button(self, text="Enter", command=self.login).pack(pady=20)
-
-    def get_stores(self):
-        # TODO: Replace with real store data from database
-        return ["Store 1", "Store 2", "Store 3"]
+        for child in self.frame.winfo_children():
+            child.grid_configure(padx=10)
 
     def login(self):
-        store = self.store_var.get()
-        role = self.selected_role.get()
-        password = self.password_var.get()
+        store = self.store_entry.get()
+        user = self.user_entry.get()
+        password = self.pass_entry.get()
 
-        if not store or not password:
-            messagebox.showwarning("Missing Info", "Please select a store and enter your password.")
-            return
-
-        # TODO: Replace with real authentication
-        if password == "password123":  # Placeholder password check
-            messagebox.showinfo("Login Successful", f"Welcome, {role} of {store}!")
-
-            # Navigate to the correct home screen
-            if role == "Owner":
-                print("Go to Owner Home Screen")
-                self.master.switch_screen(OwnerHome, store)
-            elif role == "Manager":
-                print("Go to Manager Home Screen")
-                # self.master.switch_screen(ManagerHome, store)
-            else:
-                print("Go to Employee Home Screen")
-                # self.master.switch_screen(EmployeeHome, store)
-
+        role = db.authenticate_user(store, user, password)  # Assuming authenticate_user is defined in db.py
+        if role:
+            messagebox.showinfo("Login Success", f"Welcome {role}: {user}")
+            # Transition to owner_home or other screens here
         else:
-            messagebox.showerror("Login Failed", "Incorrect password. Try again.")
+            messagebox.showerror("Login Failed", "Invalid credentials. Please try again.")

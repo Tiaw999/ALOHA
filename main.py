@@ -1,25 +1,18 @@
-# main.py
+# main
 import tkinter as tk
+import ttkbootstrap as ttk
 from gui.login_screen import LoginScreen
 
-class RetailApp(tk.Tk):
-    def __init__(self):
-        super().__init__()
-        self.title("Retail Management System")
-        self.geometry("800x600")
-        self.resizable(False, False)
+def main():
+    root = tk.Tk()  # Use Tk() for the root window
+    root.title("Store Manager Login")  # Set window title
+    root.geometry("400x300")  # Set window size
 
-        # Start with the login screen
-        self.current_screen = None
-        self.switch_screen(LoginScreen)
+    # Create the LoginScreen
+    login_screen = LoginScreen(root)
+    login_screen.pack(expand=True, fill="both")  # Ensure the screen is packed
 
-    def switch_screen(self, ScreenClass, *args, **kwargs):
-        """Destroys current screen and loads a new one."""
-        if self.current_screen:
-            self.current_screen.destroy()
-        self.current_screen = ScreenClass(self, *args, **kwargs)
-        self.current_screen.pack(fill="both", expand=True)
+    root.mainloop()  # Start the Tkinter main loop
 
 if __name__ == "__main__":
-    app = RetailApp()
-    app.mainloop()
+    main()
