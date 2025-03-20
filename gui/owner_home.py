@@ -46,7 +46,7 @@ class OwnerHome(tk.Frame):
             btn = ttk.Button(button_frame, text=text, width=20, command=command)
             btn.grid(row=idx // 2, column=idx % 2, padx=10, pady=10)
 
-        # Add Back button
+        # Add Back button to return to login screen
         back_button = ttk.Button(self, text="Back", command=self.go_back)
         back_button.pack(pady=20)
 
@@ -94,4 +94,6 @@ class OwnerHome(tk.Frame):
         # self.master.switch_screen(InvoiceScreen, self.store_name)
 
     def go_back(self):
-        self.master.switch_screen(None)  # Goes back to login screen
+        print("Back to Login Screen")
+        # Call master.switch_screen with None to go back to the login screen
+        self.master.switch_screen(None)  # None assumes None is the login screen or a reference to it
