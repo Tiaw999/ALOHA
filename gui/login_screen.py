@@ -1,4 +1,5 @@
-# gui/login_screen.py
+#gui/login_screen.py
+import sqlite3
 import tkinter as tk
 from tkinter import ttk, messagebox
 

@@ -1,10 +1,22 @@
 # db.py
-import sqlite3
+import mysql.connector
+from mysql.connector import Error
 
-DB_PATH = 'store_manager.db'  # Change path as needed
+# Update these values with your MySQL credentials
+DB_CONFIG = {
+    'host': 'localhost',
+    'user': 'root',
+    'password': 'Cooldaisy662',
+    'database': 'store_manager'  # The DB name you'll create
+}
 
 def get_connection():
-    return sqlite3.connect(DB_PATH)
+    try:
+        connection = mysql.connector.connect(**DB_CONFIG)
+        return connection
+    except Error as e:
+        print(f"Error connecting to MySQL: {e}")
+        return None
 
 # ---------- USER AUTHENTICATION ----------
 
