@@ -6,7 +6,7 @@ class WithdrawlsScreen(tk.Frame):
     def withdrawals_screen():
         root = tk.Tk()
         root.title("Withdrawals Home Screen")
-        root.geometry("1000x400")
+        root.geometry("1000x401")
 
         tk.Button(root, text="<-Back", bg="orange", command=root.destroy).pack(anchor='nw', padx=10, pady=10)
         tk.Label(root, text="Withdrawals", bg="purple", fg="white", font=("Arial", 14)).pack()
