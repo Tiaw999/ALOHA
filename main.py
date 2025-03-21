@@ -9,7 +9,7 @@ from gui.employee_home import EmployeeHome
 class Application(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("Store Manager Login")
+        self.title("Store Login")
         self.geometry("400x300")
         self.resizable(False, False)
 
