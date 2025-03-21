@@ -7,6 +7,7 @@ class ExpensesScreen(tk.Frame):
         super().__init__(master)
         self.master = master
         self.store_name = store_name
+        self.master.geometry("600x400")
         self.pack(fill="both", expand=True)
         self.create_widgets()
 

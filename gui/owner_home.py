@@ -5,7 +5,7 @@ from ttkbootstrap import ttk
 # Placeholder imports for navigation — you’ll create these screens soon
 from gui.revenue_screen import RevenueScreen
 from gui.expenses_screen import ExpensesScreen
-# from gui.payroll_screen import PayrollScreen
+from gui.payroll_screen import PayrollScreen
 # from gui.staff_screen import StaffScreen
 # from gui.timesheet_screen import TimesheetScreen
 # from gui.withdrawals_screen import WithdrawalsScreen
@@ -17,7 +17,7 @@ class OwnerHome(tk.Frame):
         super().__init__(master)
         self.master = master
         self.store_name = store_name
-
+        self.master.geometry("600x400")
         self.create_widgets()
 
     def create_widgets(self):
@@ -71,7 +71,7 @@ class OwnerHome(tk.Frame):
 
     def go_to_payroll(self):
         print("Go to Payroll Screen")
-        # self.master.switch_screen(PayrollScreen, self.store_name)
+        self.master.switch_screen(PayrollScreen, self.store_name)
 
     def go_to_staff(self):
         print("Go to Staff Screen")

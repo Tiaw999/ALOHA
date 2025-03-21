@@ -13,6 +13,7 @@ class LoginScreen(tk.Frame):
     def __init__(self, master):
         super().__init__(master)
         self.master = master
+        self.master.geometry("600x400")
         self.master.configure(bg="#f0f0f0")
 
         self.frame = ttk.Frame(master, padding="30 30 30 30")

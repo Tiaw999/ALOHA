@@ -7,7 +7,7 @@ class RevenueScreen(tk.Frame):
         super().__init__(master)
         self.master = master
         self.store_name = store_name
-
+        self.master.geometry("600x400")
         self.create_widgets()
 
     def create_widgets(self):
