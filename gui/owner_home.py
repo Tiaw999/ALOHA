@@ -4,7 +4,7 @@ from ttkbootstrap import ttk
 
 # Placeholder imports for navigation — you’ll create these screens soon
 from gui.revenue_screen import RevenueScreen
-# from gui.expenses_screen import ExpensesScreen
+from gui.expenses_screen import ExpensesScreen
 # from gui.payroll_screen import PayrollScreen
 # from gui.staff_screen import StaffScreen
 # from gui.timesheet_screen import TimesheetScreen
@@ -67,7 +67,7 @@ class OwnerHome(tk.Frame):
 
     def go_to_expenses(self):
         print("Go to Expenses Screen")
-        # self.master.switch_screen(ExpensesScreen, self.store_name)
+        self.master.switch_screen(ExpensesScreen, self.store_name)
 
     def go_to_payroll(self):
         print("Go to Payroll Screen")
