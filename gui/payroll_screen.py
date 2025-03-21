@@ -6,7 +6,7 @@ class PayrollScreen(tk.Frame):
     def payroll_screen():
         root = tk.Tk()
         root.title("Payroll Home Screen")
-        root.geometry("1000x400")
+        root.geometry("500x400")
 
         tk.Button(root, text="<-Back", bg="orange", command=root.destroy).pack(anchor='nw', padx=10, pady=10)
         tk.Label(root, text="Payroll", bg="lightblue", font=("Arial", 14)).pack()
