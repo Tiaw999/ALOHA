@@ -6,7 +6,7 @@ from ttkbootstrap import ttk
 from gui.revenue_screen import RevenueScreen
 from gui.expenses_screen import ExpensesScreen
 from gui.payroll_screen import PayrollScreen
-# from gui.staff_screen import StaffScreen
+from gui.staff_screen import StaffScreen
 from gui.timesheet_screen import TimesheetScreen
 from gui.withdrawals_screen import WithdrawalsScreen
 from gui.merchandise_screen import MerchandiseScreen
@@ -75,7 +75,7 @@ class OwnerHome(tk.Frame):
 
     def go_to_staff(self):
         print("Go to Staff Screen")
-        # self.master.switch_screen(StaffScreen, self.store_name)
+        self.master.switch_screen(StaffScreen, self.store_name)
 
     def go_to_timesheet(self):
         print("Go to Timesheet Screen")
