@@ -44,17 +44,20 @@ class EmployeeHome(tk.Frame):
 
     def log_hours(self):
         # TODO: Open Timesheet Entry Screen
+        from gui.loghours_screen import log_hours
         print("Log Hours clicked")
         self.master.switch_screen(log_hours, self.store_name)
 
 
     def log_expenses(self):
         # TODO: Open Expense Entry Screen
+        from gui.expenses_employee_screen import log_expenses
         print("Log Expenses clicked")
         self.master.switch_screen(log_expenses, self.store_name)
 
     def close_store(self):
         # TODO: Open Closing Tasks Screen
+        from gui.close_store import close_store
         print("Close Store clicked")
         self.master.switch_screen(close_store, self.store_name)
 

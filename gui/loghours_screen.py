@@ -4,8 +4,11 @@ from tkinter import ttk
 ##pushing pus
 
 class log_hours(tk.Frame):
-    def __init__(self, root):
+    def __init__(self, root, store_name, previous_screen):
         self.root = root
+        self.store_name = store_name
+        self.previous_screen = previous_screen
+        self.root.geometry("900x600")
         self.root.title("Log Hours Entry")
 
         tk.Label(root, text="Enter the following:").grid(row=0, columnspan=2, pady=5)
@@ -37,8 +40,3 @@ class log_hours(tk.Frame):
         self.enter_button = tk.Button(root, text="Enter", bg="lightgreen")
         self.enter_button.grid(row=5, column=0, columnspan=4, pady=5)
 
-
-if __name__ == "__main__":
-    root = tk.Tk()
-    app = log_hours(root)
-    root.mainloop()

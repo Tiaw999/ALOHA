@@ -2,8 +2,10 @@ import tkinter as tk
 
 
 class close_store(tk.Frame):
-    def __init__(self, root):
+    def __init__(self, root, store_name, previous_screen):
         self.root = root
+        self.store_name = store_name
+        self.previous_screen = previous_screen
         self.root.title("Closing Tasks Home Screen")
 
         tk.Label(root, text="Enter the following:").grid(row=0, columnspan=2, pady=5)

@@ -3,10 +3,11 @@ import tkinter as tk
 from tkinter import ttk
 
 class log_expenses(tk.Frame):
-    def __init__(self, root):
+    def __init__(self, root, store_name, previous_screen):
         self.root = root
         self.root.title("Expense Entry")
-
+        self.store_name = store_name
+        self.previous_screen = previous_screen
         tk.Label(root, text="Enter the following:").grid(row=0, columnspan=2, pady=5)
 
         tk.Label(root, text="Expense Type:").grid(row=1, column=0, sticky='w')
