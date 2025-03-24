@@ -1,6 +1,7 @@
 # revenue_screen.py
 import tkinter as tk
-from ttkbootstrap import ttk
+from tkinter import ttk, messagebox
+from gui.base_screen import BaseScreen
 
 class RevenueScreen(tk.Frame):
     def __init__(self, master, store_name):
@@ -52,6 +53,7 @@ class RevenueScreen(tk.Frame):
         print("Returning to Owner Home")
         from gui.owner_home import OwnerHome
         self.master.switch_screen(OwnerHome, self.store_name)
+
 if __name__ == "__main__":
     root = tk.Tk()
     app = RevenueScreen (root)

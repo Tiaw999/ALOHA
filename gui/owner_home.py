@@ -98,4 +98,4 @@ class OwnerHome(tk.Frame):
         print("Back to Login Screen")
         from gui.login_screen import LoginScreen
         # Call master.switch_screen with None to go back to the login screen
-        self.master.switch_screen(LoginScreen, self.store_name)
+        self.master.switch_screen(LoginScreen)
