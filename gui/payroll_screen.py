@@ -1,29 +1,60 @@
-#trying to fix sizing
+# payroll_screen.py
 
 import tkinter as tk
-from tkinter import ttk
+from ttkbootstrap import ttk
+
 class PayrollScreen(tk.Frame):
-    def payroll_screen():
-        root = tk.Tk()
-        root.title("Payroll Home Screen")
-        root.geometry("1000x400")
+    def __init__(self, master, store_name):
+        super().__init__(master)
+        self.master = master
+        self.store_name = store_name
 
-        tk.Button(root, text="<-Back", bg="orange", command=root.destroy).pack(anchor='nw', padx=10, pady=10)
-        tk.Label(root, text="Payroll", bg="lightblue", font=("Arial", 14)).pack()
+        self.create_widgets()
 
-        frame = tk.Frame(root)
-        frame.pack(pady=10)
+    def create_widgets(self):
+        # Store Name Label
+        store_label = ttk.Label(self, text=f"Payroll - {self.store_name}", font=("Arial", 18, "bold"))
+        store_label.grid(row=0, column=0, columnspan=3, pady=10)
 
-        columns = ("PAYDATE", "EMPNAME", "REGULARPAY", "BONUS")
-        tree = ttk.Treeview(frame, columns=columns, show="headings")
+        # Back Button
+        back_button = ttk.Button(self, text="<- Back", command=self.go_back)
+        back_button.grid(row=1, column=0, padx=10, pady=5, sticky="w")
+
+        # Payroll Label/Button (for visual consistency)
+        payroll_label = ttk.Label(self, text="Payroll", font=("Arial", 14))
+        payroll_label.grid(row=1, column=1, padx=10, pady=5)
+
+        # Table (Treeview)
+        columns = ("Employee Name", "Pay Date", "Regular Pay", "Bonus")
+        self.tree = ttk.Treeview(self, columns=columns, show="headings")
         for col in columns:
-            tree.heading(col, text=col)
-        tree.pack()
+            self.tree.heading(col, text=col)
+            self.tree.column(col, width=120)
+        self.tree.grid(row=2, column=0, columnspan=3, padx=10, pady=10)
 
-        tk.Button(root, text="Edit Table", bg="green").pack(side='left', padx=10, pady=10)
-        tk.Button(root, text="Add row", bg="green").pack(side='right', padx=10, pady=10)
+        # Edit Table Button
+        edit_btn = ttk.Button(self, text="Edit Table", command=self.edit_table)
+        edit_btn.grid(row=3, column=1, pady=5)
 
-        root.mainloop()
+        # Add Row Button
+        add_row_btn = ttk.Button(self, text="Add Row", command=self.add_row)
+        add_row_btn.grid(row=3, column=2, pady=5)
 
-    if __name__ == "__main__":
-        payroll_screen()
+        # Force redraw
+        self.update()
+
+    def add_row(self):
+        self.tree.insert("", "end", values=("", "", "", ""))
+
+    def edit_table(self):
+        print("Edit table clicked")
+
+    def go_back(self):
+        print("Returning to Owner Home")
+        from gui.owner_home import OwnerHome
+        self.master.switch_screen(OwnerHome, self.store_name)
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = PayrollScreen(root, "Your Store")
+    root.mainloop()
