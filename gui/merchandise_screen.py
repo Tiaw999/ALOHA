@@ -6,7 +6,7 @@ class MerchandiseScreen(tk.Frame):
     def __init__(self, master):
         super().__init__(master)
         self.master = master
-        self.master.geometry("500x300")  # Set the size for this frame
+        self.master.geometry("900x600")
 
         # Back and Edit buttons
         tk.Button(self, text="<-Back", bg="orange", command=self.go_back).grid(row=0, column=0, padx=5, pady=5)

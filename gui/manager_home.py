@@ -5,6 +5,7 @@ class ManagerHome(tk.Frame):
         super().__init__(master)
         self.master = master
         self.store = store
+        self.master.geometry("900x600")
         self.master.title(f"Manager Home - {store}")
         self.create_widgets()
 

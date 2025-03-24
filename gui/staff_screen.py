@@ -7,6 +7,7 @@ class StaffScreen(tk.Frame):
     def __init__(self, master, store_name):
         super().__init__(master)
         self.master = master
+        self.master.geometry("900x600")
         self.store_name = store_name
         self.configure(bg="white")
         self.pack(fill="both", expand=True)

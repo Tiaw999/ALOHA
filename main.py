@@ -7,7 +7,6 @@ class Application(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Store Manager Login")
-        self.geometry("400x300")
         self.resizable(False, False)
 
         # Set the initial screen to the login screen

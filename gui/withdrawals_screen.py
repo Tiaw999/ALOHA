@@ -8,6 +8,7 @@ class WithdrawalsScreen(tk.Frame):
         self.master = master
         self.store_name = store_name
         self.configure(bg="white")
+        self.master.geometry("900x600")
         self.pack(fill="both", expand=True)
 
         self.create_widgets()
