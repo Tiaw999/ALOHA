@@ -7,19 +7,19 @@ class Application(tk.Tk):
         super().__init__()
         self.title("Store Manager Login")
         self.resizable(False, False)
-
+        self.current_screen = None  # Initialize current_screen
         # Set the initial screen to the login screen
         self.switch_screen(LoginScreen)
 
     def switch_screen(self, screen_class, *args):
-        """Switch the current screen to the new screen."""
-        # Destroy the current screen/frame
-        for widget in self.winfo_children():
-            widget.destroy()
+        if self.current_screen is not None:
+            self.current_screen.destroy()  # Remove the current screen
 
-        # Create and pack the new screen
-        screen = screen_class(self, *args)
-        screen.pack(expand=True, fill="both")
+        # Pass the current screen as the previous_screen argument to all screens
+        screen = screen_class(self, *args, previous_screen=self.current_screen)
+
+        self.current_screen = screen  # Set the new screen
+        self.current_screen.pack(fill=tk.BOTH, expand=True)
 
 def main():
     app = Application()

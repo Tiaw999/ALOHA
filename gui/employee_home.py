@@ -1,11 +1,12 @@
 import tkinter as tk
 
 class EmployeeHome(tk.Frame):
-    def __init__(self, master, store):
+    def __init__(self, master, store_name, previous_screen):
         super().__init__(master)
         self.master = master
-        self.store = store
-        self.master.title(f"Employee Home - {store}")
+        self.store_name = store_name
+        self.previous_screen = previous_screen
+        self.master.title(f"Employee Home - {store_name}")
         self.create_widgets()
 
     def create_widgets(self):

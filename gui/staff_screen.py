@@ -4,11 +4,12 @@ import tkinter as tk
 from tkinter import ttk
 
 class StaffScreen(tk.Frame):
-    def __init__(self, master, store_name):
+    def __init__(self, master, store_name, previous_screen):
         super().__init__(master)
         self.master = master
         self.master.geometry("900x600")
         self.store_name = store_name
+        self.previous_screen = previous_screen
         self.configure(bg="white")
         self.pack(fill="both", expand=True)
 
@@ -54,5 +55,4 @@ class StaffScreen(tk.Frame):
         print("Edit Table clicked")
 
     def go_back(self):
-        from gui.owner_home import OwnerHome  # Lazy import to prevent circular import issues
-        self.master.switch_screen(OwnerHome, self.store_name)
+        self.master.switch_screen(self.previous_screen.__class__, self.store_name)

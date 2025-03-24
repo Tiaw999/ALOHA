@@ -4,11 +4,12 @@ import tkinter as tk
 from ttkbootstrap import ttk
 
 class PayrollScreen(tk.Frame):
-    def __init__(self, master, store_name):
+    def __init__(self, master, store_name, previous_screen):
         super().__init__(master)
         self.master = master
         self.master.geometry("900x600")
         self.store_name = store_name
+        self.previous_screen = previous_screen
 
         self.create_widgets()
 
@@ -51,9 +52,7 @@ class PayrollScreen(tk.Frame):
         print("Edit table clicked")
 
     def go_back(self):
-        print("Returning to Owner Home")
-        from gui.owner_home import OwnerHome
-        self.master.switch_screen(OwnerHome, self.store_name)
+        self.master.switch_screen(self.previous_screen.__class__, self.store_name)
 
 if __name__ == "__main__":
     root = tk.Tk()

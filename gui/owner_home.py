@@ -14,10 +14,11 @@ from gui.merchandise_screen import MerchandiseScreen
 from gui.invoice_screen import InvoiceScreen
 
 class OwnerHome(tk.Frame):
-    def __init__(self, master, store_name):
+    def __init__(self, master, store_name, previous_screen):
         super().__init__(master)
         self.master = master
         self.store_name = store_name
+        self.previous_screen = previous_screen
         self.master.geometry("900x600")
         self.create_widgets()
 

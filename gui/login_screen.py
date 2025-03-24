@@ -6,16 +6,17 @@ import db  # Make sure to import the db module where get_stores is defined
 
 # Import your home screen modules
 from gui.owner_home import OwnerHome
-# from gui.manager_home import ManagerHome
-# from gui.employee_home import EmployeeHome
+from gui.manager_home import ManagerHome
+from gui.employee_home import EmployeeHome
 
 
 
 class LoginScreen(tk.Frame):
-    def __init__(self, master):
+    def __init__(self, master, previous_screen):
         super().__init__(master)
         self.master = master
         self.master.configure(bg="#f0f0f0")
+        self.previous_screen = previous_screen
         # Set the geometry to fit the screen
         self.master.geometry("900x600")
         self.frame = ttk.Frame(self, padding="30 30 30 30")

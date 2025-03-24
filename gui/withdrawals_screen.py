@@ -3,10 +3,11 @@ import tkinter as tk
 from tkinter import ttk
 
 class WithdrawalsScreen(tk.Frame):
-    def __init__(self, master, store_name):
+    def __init__(self, master, store_name, previous_screen):
         super().__init__(master)
         self.master = master
         self.store_name = store_name
+        self.previous_screen = previous_screen
         self.configure(bg="white")
         self.master.geometry("900x600")
         self.pack(fill="both", expand=True)
@@ -42,8 +43,7 @@ class WithdrawalsScreen(tk.Frame):
         add_row_button.grid(row=2, column=2, pady=10)
 
     def go_back(self):
-        from gui.owner_home import OwnerHome  # Lazy import to avoid circular reference
-        self.master.switch_screen(OwnerHome, self.store_name)
+        self.master.switch_screen(self.previous_screen.__class__, self.store_name)
 
     def edit_table(self):
         print("Edit table clicked")

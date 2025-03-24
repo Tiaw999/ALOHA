@@ -3,10 +3,11 @@ import tkinter as tk
 from tkinter import ttk
 
 class MerchandiseScreen(tk.Frame):
-    def __init__(self, master, store_name):
+    def __init__(self, master, store_name, previous_screen):
         super().__init__(master)
         self.master = master
         self.store_name = store_name
+        self.previous_screen = previous_screen
         self.master.geometry("900x600")
 
         # Back and Edit buttons
@@ -36,6 +37,4 @@ class MerchandiseScreen(tk.Frame):
         self.merchandise_table.insert("", "end", values=("New Date", "New Type", "New Value"))
 
     def go_back(self):
-        from gui.owner_home import OwnerHome
-        # Implement logic for the back button to return to previous screen (e.g., OwnerHome)
-        self.master.switch_screen(OwnerHome, self.store_name)
+        self.master.switch_screen(self.previous_screen.__class__, self.store_name)
