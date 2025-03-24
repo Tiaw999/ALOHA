@@ -2,6 +2,7 @@
 import tkinter as tk
 from ttkbootstrap import ttk
 
+
 # Imports for navigation
 from gui.revenue_screen import RevenueScreen
 from gui.expenses_screen import ExpensesScreen
@@ -46,9 +47,9 @@ class OwnerHome(tk.Frame):
             btn = ttk.Button(button_frame, text=text, width=20, command=command)
             btn.grid(row=idx // 2, column=idx % 2, padx=10, pady=10)
 
-        # Add Back button to return to login screen
-        back_button = ttk.Button(self, text="Back", command=self.go_back)
-        back_button.pack(pady=20)
+        # Add Back button to return to login screen (Top-Left)
+        back_button = ttk.Button(self, text="<- Back", command=self.go_back)
+        back_button.place(x=10, y=10)  # Top-left corner with slight padding
 
         # Make sure the columns in the grid expand properly
         button_frame.grid_columnconfigure(0, weight=1)
@@ -95,5 +96,6 @@ class OwnerHome(tk.Frame):
 
     def go_back(self):
         print("Back to Login Screen")
+        from gui.login_screen import LoginScreen
         # Call master.switch_screen with None to go back to the login screen
-        self.master.switch_screen(None)  # None assumes None is the login screen or a reference to it
+        self.master.switch_screen(LoginScreen, self.store_name)

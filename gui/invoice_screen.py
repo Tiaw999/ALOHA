@@ -4,9 +4,10 @@ import tkinter as tk
 from tkinter import ttk
 
 class InvoiceScreen(tk.Frame):
-    def __init__(self, master):
+    def __init__(self, master, store_name):
         super().__init__(master)
         self.master = master
+        self.store_name = store_name
         self.master.geometry("900x600")
 
         # Back and Edit buttons
@@ -36,5 +37,6 @@ class InvoiceScreen(tk.Frame):
         self.invoice_table.insert("", "end", values=("New Date", "New Invoice", "New Company", "New Amount", "New Due", "New Paid", "New Paid With", "New Date Paid"))
 
     def go_back(self):
+        from gui.owner_home import OwnerHome
         # Implement the logic for going back to the previous screen (e.g., OwnerHome)
-        self.master.switch_screen(OwnerHome)
+        self.master.switch_screen(OwnerHome, self.store_name)

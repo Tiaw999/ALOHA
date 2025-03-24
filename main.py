@@ -2,7 +2,6 @@
 import tkinter as tk
 from gui.login_screen import LoginScreen
 
-
 class Application(tk.Tk):
     def __init__(self):
         super().__init__()
