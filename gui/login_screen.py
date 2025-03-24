@@ -14,8 +14,8 @@ class LoginScreen(tk.Frame):
         super().__init__(master)
         self.master = master
         self.master.configure(bg="#f0f0f0")
-
-        self.frame = ttk.Frame(master, padding="30 30 30 30")
+        self.master.geometry("900x300")  # Set the geometry for this frame
+        self.frame = ttk.Frame(self, padding="30 30 30 30")
         self.frame.pack(expand=True)
 
         # Create widgets

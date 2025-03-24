@@ -1,10 +1,7 @@
 # main
 import tkinter as tk
-import ttkbootstrap as ttk
 from gui.login_screen import LoginScreen
-from gui.owner_home import OwnerHome
-from gui.manager_home import ManagerHome
-from gui.employee_home import EmployeeHome
+
 
 class Application(tk.Tk):
     def __init__(self):

@@ -2,7 +2,7 @@
 import tkinter as tk
 from ttkbootstrap import ttk
 
-# Placeholder imports for navigation — you’ll create these screens soon
+# Imports for navigation
 from gui.revenue_screen import RevenueScreen
 from gui.expenses_screen import ExpensesScreen
 from gui.payroll_screen import PayrollScreen
