@@ -2,7 +2,7 @@
 import tkinter as tk
 from tkinter import ttk
 
-class ExpenseEmployeeScreen(tk.Frame):
+class log_expenses(tk.Frame):
     def __init__(self, root):
         self.root = root
         self.root.title("Expense Entry")
@@ -26,5 +26,5 @@ class ExpenseEmployeeScreen(tk.Frame):
 
 if __name__ == "__main__":
     root = tk.Tk()
-    app = ExpenseEmployeeScreen(root)
+    app = log_expenses(root)
     root.mainloop()

@@ -1,7 +1,7 @@
 import tkinter as tk
 
 
-class ClosingTasks(tk.Frame):
+class close_store(tk.Frame):
     def __init__(self, root):
         self.root = root
         self.root.title("Closing Tasks Home Screen")
@@ -29,5 +29,5 @@ class ClosingTasks(tk.Frame):
 
 if __name__ == "__main__":
     root = tk.Tk()
-    app = ClosingTasks(root)
+    app = close_store(root)
     root.mainloop()

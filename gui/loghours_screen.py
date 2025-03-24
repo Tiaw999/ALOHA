@@ -3,7 +3,7 @@ import tkinter as tk
 from tkinter import ttk
 ##pushing pus
 
-class Loghour(tk.Frame):
+class log_hours(tk.Frame):
     def __init__(self, root):
         self.root = root
         self.root.title("Log Hours Entry")
@@ -40,5 +40,5 @@ class Loghour(tk.Frame):
 
 if __name__ == "__main__":
     root = tk.Tk()
-    app = Loghour(root)
+    app = log_hours(root)
     root.mainloop()
