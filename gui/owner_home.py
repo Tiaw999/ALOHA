@@ -1,7 +1,7 @@
 # gui/owner_home.py
 import tkinter as tk
 from ttkbootstrap import ttk
-
+from datetime import datetime
 
 # Imports for navigation
 from gui.revenue_screen import RevenueScreen
@@ -12,6 +12,7 @@ from gui.timesheet_screen import TimesheetScreen
 from gui.withdrawals_screen import WithdrawalsScreen
 from gui.merchandise_screen import MerchandiseScreen
 from gui.invoice_screen import InvoiceScreen
+
 
 class OwnerHome(tk.Frame):
     def __init__(self, master, store_name, previous_screen):
@@ -27,7 +28,42 @@ class OwnerHome(tk.Frame):
         title_label = ttk.Label(self, text=f"Owner Home - {self.store_name}", font=("Arial", 24))
         title_label.pack(pady=20)
 
-        # Frame for Buttons
+        # Frame for the Month and Year Dropdown
+        date_frame = ttk.Frame(self)
+        date_frame.pack(pady=10, padx=20)
+
+        # Get current month and year
+        current_month = datetime.now().strftime('%B')  # Current month as full name (e.g., "March")
+        current_year = datetime.now().year  # Current year (e.g., 2025)
+
+        months = [
+            "January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December"
+        ]
+
+        years = [str(year) for year in range(current_year, current_year - 5, -1)]  # Last 5 years
+
+        # Month Dropdown (Combobox)
+        month_label = ttk.Label(date_frame, text="Select Month:")
+        month_label.grid(row=0, column=0, padx=10, pady=5, sticky="w")
+
+        self.month_combobox = ttk.Combobox(date_frame, values=months)
+        self.month_combobox.grid(row=0, column=1, padx=10, pady=5)
+        self.month_combobox.set(current_month)  # Set the default month to the current month
+
+        # Year Dropdown (Combobox)
+        year_label = ttk.Label(date_frame, text="Select Year:")
+        year_label.grid(row=0, column=2, padx=10, pady=5, sticky="w")
+
+        self.year_combobox = ttk.Combobox(date_frame, values=years)
+        self.year_combobox.grid(row=0, column=3, padx=10, pady=5)
+        self.year_combobox.set(str(current_year))  # Set the default year to the current year
+
+        # Bind the selection of month or year to automatically show data for that combination
+        self.month_combobox.bind("<<ComboboxSelected>>", self.show_month_data)
+        self.year_combobox.bind("<<ComboboxSelected>>", self.show_month_data)
+
+        # Frame for Buttons (Revenue, Expenses, etc.)
         button_frame = ttk.Frame(self)
         button_frame.pack(pady=10, padx=20)
 
@@ -62,6 +98,12 @@ class OwnerHome(tk.Frame):
 
         # Force a redraw of widgets to resolve any rendering issues
         self.update()
+
+    def show_month_data(self, event):
+        selected_month = self.month_combobox.get()
+        selected_year = self.year_combobox.get()
+        print(f"Displaying data for {selected_month} {selected_year}")
+        # Logic to filter data by the selected month and year goes here
 
     def go_to_revenue(self):
         print("Go to Revenue Screen")
