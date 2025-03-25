@@ -10,7 +10,7 @@ class PayrollScreen(tk.Frame):
         self.master.geometry("900x600")
         self.store_name = store_name
         self.previous_screen = previous_screen
-
+        self.master.title("Payroll")
         self.create_widgets()
 
     def create_widgets(self):

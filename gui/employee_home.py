@@ -7,7 +7,7 @@ class EmployeeHome(tk.Frame):
         super().__init__(master)
         self.master.geometry("900x600")
         self.configure(bg="#f0f0f0")
-
+        self.master.title("Employee Home")
         self.store_name = store_name
         self.previous_screen = previous_screen
 

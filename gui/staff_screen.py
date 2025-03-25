@@ -10,6 +10,7 @@ class StaffScreen(tk.Frame):
         self.master.geometry("900x600")
         self.store_name = store_name
         self.previous_screen = previous_screen
+        self.master.title("Staff")
         self.configure(bg="white")
         self.pack(fill="both", expand=True)
 

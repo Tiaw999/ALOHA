@@ -9,6 +9,7 @@ class RevenueScreen(tk.Frame):
         self.master = master
         self.store_name = store_name
         self.master.geometry("900x600")
+        self.master.title("Revenue")
         self.create_widgets()
         self.previous_screen = previous_screen  # Store reference to the previous screen
 

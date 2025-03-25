@@ -8,6 +8,7 @@ class MerchandiseScreen(tk.Frame):
         self.master = master
         self.store_name = store_name
         self.previous_screen = previous_screen
+        self.master.title("Merchandise")
         self.master.geometry("900x600")
 
         # Back and Edit buttons

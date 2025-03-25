@@ -18,6 +18,7 @@ class ManagerHome(tk.Frame):
         super().__init__(master)
         self.master = master
         self.store_name = store_name
+        self.master.title("Manager Home")
         self.master.geometry("900x600")
         self.create_widgets()
         self.previous_screen = previous_screen

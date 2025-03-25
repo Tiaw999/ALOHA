@@ -9,6 +9,7 @@ class ExpensesScreen(tk.Frame):
         self.store_name = store_name
         self.previous_screen = previous_screen
         self.master.geometry("900x600")
+        self.master.title("Expenses")
         self.pack(fill="both", expand=True)
         self.create_widgets()
 

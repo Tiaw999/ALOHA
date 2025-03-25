@@ -9,6 +9,7 @@ class InvoiceScreen(tk.Frame):
         self.master = master
         self.previous_screen = previous_screen
         self.store_name = store_name
+        self.master.title("Invoices")
         self.master.geometry("900x600")
 
         # Back and Edit buttons

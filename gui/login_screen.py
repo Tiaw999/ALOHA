@@ -17,6 +17,7 @@ class LoginScreen(tk.Frame):
         self.master = master
         self.master.configure(bg="#f0f0f0")
         self.previous_screen = previous_screen
+        self.master.title("Login Screen")
         # Set the geometry to fit the screen
         self.master.geometry("900x600")
         self.frame = ttk.Frame(self, padding="30 30 30 30")

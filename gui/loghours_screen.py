@@ -9,7 +9,7 @@ class LogHours(tk.Frame):
         self.store_name = store_name
         self.previous_screen = previous_screen
         self.root.geometry("900x600")
-        self.root.title("Log Hours Entry")
+        self.root.title("Log Hours")
 
         self.pack(fill=tk.BOTH, expand=True)
 

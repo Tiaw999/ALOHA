@@ -6,7 +6,7 @@ class LogExpenses(tk.Frame):
     def __init__(self, root, store_name=None, previous_screen=None):
         super().__init__(root)
         self.root = root
-        self.root.title("Expense Entry")
+        self.root.title("Log Expenses")
         self.store_name = store_name
         self.previous_screen = previous_screen
         self.pack(fill=tk.BOTH, expand=True)

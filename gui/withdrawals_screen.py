@@ -8,6 +8,7 @@ class WithdrawalsScreen(tk.Frame):
         self.master = master
         self.store_name = store_name
         self.previous_screen = previous_screen
+        self.withdrawals.title("Withdrawals")
         self.configure(bg="white")
         self.master.geometry("900x600")
         self.pack(fill="both", expand=True)

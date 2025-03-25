@@ -9,6 +9,7 @@ class TimesheetScreen(tk.Frame):
         self.master = master
         self.store_name = store_name
         self.previous_screen = previous_screen
+        self.master.title("Timesheet")
         self.master.geometry("900x600")
         self.create_widgets()
 

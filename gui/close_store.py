@@ -5,7 +5,7 @@ class CloseStore(tk.Frame):
     def __init__(self, root, store_name, previous_screen):
         super().__init__(root)
         self.root = root
-        self.root.title("Closing Tasks Home Screen")
+        self.root.title("Closing Tasks")
         self.store_name = store_name
         self.previous_screen = previous_screen
         self.pack(fill=tk.BOTH, expand=True)
