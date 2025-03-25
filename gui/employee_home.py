@@ -44,9 +44,9 @@ class EmployeeHome(tk.Frame):
 
     def log_hours(self):
         # TODO: Open Timesheet Entry Screen
-        from gui.loghours_screen import log_hours
+        from gui.loghours_screen import LogHours
         print("Log Hours clicked")
-        self.master.switch_screen(log_hours, self.store_name)
+        self.master.switch_screen(LogHours, self.store_name)
 
 
     def log_expenses(self):
