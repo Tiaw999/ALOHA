@@ -51,9 +51,9 @@ class EmployeeHome(tk.Frame):
 
     def log_expenses(self):
         # TODO: Open Expense Entry Screen
-        from gui.expenses_employee_screen import log_expenses
+        from gui.expenses_employee_screen import LogExpenses
         print("Log Expenses clicked")
-        self.master.switch_screen(log_expenses, self.store_name)
+        self.master.switch_screen(LogExpenses, self.store_name)
 
     def close_store(self):
         # TODO: Open Closing Tasks Screen
