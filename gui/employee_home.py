@@ -57,9 +57,9 @@ class EmployeeHome(tk.Frame):
 
     def close_store(self):
         # TODO: Open Closing Tasks Screen
-        from gui.close_store import close_store
+        from gui.close_store import CloseStore
         print("Close Store clicked")
-        self.master.switch_screen(close_store, self.store_name)
+        self.master.switch_screen(CloseStore, self.store_name)
 
     def go_back(self):
         from gui.login_screen import LoginScreen
