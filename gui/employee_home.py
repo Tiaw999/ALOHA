@@ -12,7 +12,7 @@ class EmployeeHome(tk.Frame):
         self.previous_screen = previous_screen
 
         # Back button (top left)
-        back_button = ttk.Button(self, text="← Back", command=self.destroy)
+        back_button = ttk.Button(self, text="← Back", command=self.go_back)
         back_button.pack(anchor="nw", padx=10, pady=10)
 
         # Greeting
