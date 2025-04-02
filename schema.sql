@@ -4,7 +4,7 @@ USE store_manager;
 
 -- Create Stores Table
 CREATE TABLE IF NOT EXISTS stores (
-    storename VARCHAR(50) NOT NULL PRIMARY KEY,
+    storename VARCHAR(50) NOT NULL PRIMARY KEY
 );
 
 -- Create Staff Table
