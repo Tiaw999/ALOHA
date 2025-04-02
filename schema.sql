@@ -5,7 +5,6 @@ USE store_manager;
 -- Create Stores Table
 CREATE TABLE IF NOT EXISTS stores (
     storename VARCHAR(50) NOT NULL PRIMARY KEY,
-    password VARCHAR(255)
 );
 
 -- Create Staff Table
