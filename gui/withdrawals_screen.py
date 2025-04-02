@@ -2,52 +2,55 @@
 import tkinter as tk
 from tkinter import ttk
 
-class WithdrawalsScreen(tk.Frame):
-    def __init__(self, master, store_name, previous_screen):
-        super().__init__(master)
-        self.master = master
-        self.store_name = store_name
-        self.previous_screen = previous_screen
-        self.withdrawals.title("Withdrawals")
-        self.configure(bg="white")
-        self.master.geometry("900x600")
-        self.pack(fill="both", expand=True)
+import tkinter as tk
+from tkinter import ttk
 
-        self.create_widgets()
 
-    def create_widgets(self):
+class WithdrawalsScreen(tk.Tk):
+    def __init__(self):
+        super().__init__()
+        self.title("Withdrawals Screen")
+        self.geometry("900x400")
+        self.configure(bg='lightgray')
+
         # Back Button
-        back_button = tk.Button(self, text="<- Back", bg="orange", fg="black", font=("Arial", 12),
-                                command=self.go_back)
-        back_button.grid(row=0, column=0, padx=10, pady=10, sticky="w")
+        self.back_button = tk.Button(self, text="<-Back", bg="orange", command=self.go_back)
+        self.back_button.grid(row=0, column=0, padx=10, pady=10, sticky="w")
 
-        # Title Label
-        title_label = tk.Label(self, text="Withdrawals", bg="purple", fg="white", font=("Arial", 16, "bold"))
-        title_label.grid(row=0, column=1, columnspan=2, pady=10)
+        # Withdrawals Button
+        self.withdrawals_button = tk.Button(self, text="Withdrawals", bg="purple", fg="white")
+        self.withdrawals_button.grid(row=0, column=1, padx=10, pady=10)
 
-        # Treeview Table
-        columns = ("DATE", "EMPNAME", "AMOUNT", "NOTES")
-        self.tree = ttk.Treeview(self, columns=columns, show="headings")
-        for col in columns:
-            self.tree.heading(col, text=col)
-            self.tree.column(col, width=150)
+        # Table
+        self.tree = ttk.Treeview(self, columns=("Date", "Emp Name", "Amount", "Notes"), show="headings")
+        self.tree.heading("Date", text="DATE")
+        self.tree.heading("Emp Name", text="EMPNAME")
+        self.tree.heading("Amount", text="AMOUNT")
+        self.tree.heading("Notes", text="NOTES")
+
         self.tree.grid(row=1, column=0, columnspan=3, padx=10, pady=10)
 
-        # Edit Table Button
-        edit_button = tk.Button(self, text="Edit Table", bg="green", fg="white", font=("Arial", 12),
-                                command=self.edit_table)
-        edit_button.grid(row=2, column=0, pady=10)
+        # Buttons
+        self.edit_button = tk.Button(self, text="Edit Table", bg="green", command=self.edit_table)
+        self.edit_button.grid(row=2, column=1, padx=10, pady=10)
 
-        # Add Row Button
-        add_row_button = tk.Button(self, text="Add Row", bg="green", fg="white", font=("Arial", 12),
-                                   command=self.add_row)
-        add_row_button.grid(row=2, column=2, pady=10)
+        self.add_row_button = tk.Button(self, text="Add Row", bg="green", command=self.add_row)
+        self.add_row_button.grid(row=2, column=2, padx=10, pady=10)
+
+        # Store Name Label
+        self.store_label = tk.Label(self, text="Store Name", bg="lightgray")
+        self.store_label.grid(row=3, column=0, columnspan=3, pady=10)
 
     def go_back(self):
-        self.master.switch_screen(self.previous_screen.__class__, self.store_name)
+        print("Back button clicked")
 
     def edit_table(self):
-        print("Edit table clicked")
+        print("Edit Table clicked")
 
     def add_row(self):
         self.tree.insert("", "end", values=("", "", "", ""))
+
+
+if __name__ == "__main__":
+    app = WithdrawalsScreen()
+    app.mainloop()
