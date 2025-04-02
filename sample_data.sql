@@ -1,6 +1,6 @@
 -- Insert sample stores
-INSERT INTO stores (storename, password) 
-VALUES ('aloha', 'storepass1'), ('aloha2', 'storepass2'), ('aloha3', 'storepass3');
+INSERT INTO stores (storename)
+VALUES ('aloha'), ('aloha2'), ('aloha3');
 
 -- Insert sample staff
 INSERT INTO staff (name, storename, hourlyrate, bonusrate, password, role) 
