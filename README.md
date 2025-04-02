@@ -1,21 +1,44 @@
 # ALOHA
 
-## Overview
-This store management application is a comprehensive system designed to help manage the operations of a retail store. This application allows employees to log hours, manage expenses, and perform essential closing tasks such as cash management. It includes a user-friendly GUI for ease of use.
+## Purpose
+This project is a store management application designed to help store owners log hours worked, record expenses, and track closing tasks. The application features multiple screens and functionalities, including logging hours, managing expenses, and handling store closing procedures.
 
-## Features
-- **Log Hours**: Employees can enter their clock-in and clock-out times along with their regular in/out amounts.
-- **Log Expenses**: Managers can log various store expenses, specifying the expense type and amount.
-- **Close Store**: Employees can enter daily closing data, including register and credit totals and cash in the envelope.
-- **Navigation**: The app allows easy navigation between different functionalities through a clean and intuitive interface.
+## Installation
 
-## Requirements
-This project uses the following Python packages:
-- `tkinter` for the graphical user interface (GUI).
-- `pymysql` for connecting to MySQL databases.
-- `ttk` for additional GUI styling options.
+To get started with the ALOHA, follow the steps below.
 
-To set up this project, ensure that you have Python 3.x installed. You can install the dependencies via the following command:
+### Prerequisites
+- Python 3.x
+- MySQL (or any other SQL database you plan to use)
 
-```bash
-pip install -r requirements.txt
+### Install Dependencies
+
+1. Clone the repository to your local machine:
+    ```bash
+    git clone https://github.com/tiaw999/ALOHA.git
+    ```
+
+2. Navigate into the project directory:
+    ```bash
+    cd ALOHA
+    ```
+
+3. Install the required Python dependencies:
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+### Running the Application
+
+1. Make sure you have a MySQL database set up (or any other SQL database you plan to use) and configure the necessary credentials in the application.
+
+2. Run the main script to start the application:
+    ```bash
+    python main.py
+    ```
+
+## SQL Integration
+The application requires MySQL. Make sure your SQL database is properly set up and connected.
+
+
+
