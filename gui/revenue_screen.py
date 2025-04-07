@@ -3,12 +3,12 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from datetime import datetime
 from db import get_connection
-
+import mysql.connector
 
 class RevenueScreen(tk.Frame):
     def __init__(self, master, store_name, previous_screen):
         super().__init__(master)
-        self.columns = ("Date", "Reg", "Credit", "Cash in Envelope")
+        self.columns = ("ID", "Date", "Reg", "Credit", "Cash in Envelope")
         self.master = master
         self.store_name = store_name
         self.previous_screen = previous_screen
@@ -32,12 +32,12 @@ class RevenueScreen(tk.Frame):
         revenue_label.grid(row=1, column=1, padx=10, pady=5)
 
         # Table (Treeview)
-        columns = ("Date", "Reg", "Credit", "Cash in Envelope")
+        columns = ("ID", "Date", "Reg", "Credit", "Cash in Envelope")
         self.tree = ttk.Treeview(self, columns=columns, show="headings")
 
-        for col in columns:
-            self.tree.heading(col, text=col)
-            self.tree.column(col, width=120)
+        for col in self.columns:
+            self.tree.heading(col, text=col, anchor="w")  # 'w' stands for "west" which aligns to the left
+            self.tree.column(col, width=120, anchor="w")  # Ensures the column values are also left-aligned
 
         self.tree.grid(row=2, column=0, columnspan=3, padx=10, pady=10)
 
@@ -56,15 +56,19 @@ class RevenueScreen(tk.Frame):
 
         # Edit Table Button
         edit_btn = ttk.Button(self, text="Edit Table", command=self.edit_table)
-        edit_btn.grid(row=3, column=1, pady=5)
+        edit_btn.grid(row=3, column=0, pady=5)
 
         # Add Row Button
         add_row_btn = ttk.Button(self, text="Add Row", command=self.add_row)
-        add_row_btn.grid(row=3, column=2, pady=5)
+        add_row_btn.grid(row=3, column=1, pady=5)
+
+        # Delete Row Button
+        delete_button = ttk.Button(self, text="Delete Row", command=self.delete_row)
+        delete_button.grid(row=3, column=2, padx=10, pady=5, sticky="w")
 
         # Clear Filter Button
         clear_filter_btn = ttk.Button(self, text="Clear Filter", command=self.clear_filter)
-        clear_filter_btn.grid(row=3, column=0, pady=5)
+        clear_filter_btn.grid(row=3, column=3, pady=5)
 
     def add_row(self):
         """ Open a pop-up window to add a new revenue row """
@@ -106,9 +110,7 @@ class RevenueScreen(tk.Frame):
                 return
 
             try:
-                conn = mysql.connector.connect(
-                    host="localhost", user="root", password="Cooldaisy662", database="store_manager"
-                )
+                conn = get_connection()
                 cursor = conn.cursor()
                 cursor.execute("""
                     INSERT INTO revenue (storename, reg, credit, cashinenvelope, date)
@@ -133,6 +135,40 @@ class RevenueScreen(tk.Frame):
 
         add_window.grab_set()  # Make window modal (prevents interaction with main window)
 
+    # Delete Row Function
+    def delete_row(self):
+        """ Deletes a selected row from the Treeview and the database """
+        selected_item = self.tree.selection()  # Get the selected item
+
+        if not selected_item:
+            messagebox.showwarning("Selection Error", "Please select a row to delete.")
+            return
+
+        # Get the ID of the selected row (assuming ID is in the first column)
+        row_id = self.tree.item(selected_item, "values")[0]  # Assuming ID is the first value in the row
+
+        # Confirm the deletion with the user
+        confirm = messagebox.askyesno("Confirm Deletion",
+                                      f"Are you sure you want to delete the record with ID {row_id}?")
+
+        if confirm:
+            try:
+                conn = get_connection()
+                cursor = conn.cursor()
+                # Delete the row with the corresponding ID
+                cursor.execute("DELETE FROM revenue WHERE id = %s", (row_id,))
+                conn.commit()
+
+                # Remove the row from the Treeview
+                self.tree.delete(selected_item)
+
+                cursor.close()
+                conn.close()
+
+                messagebox.showinfo("Success", "Row deleted successfully!")
+            except Error as e:
+                messagebox.showerror("Error", f"Failed to delete row: {e}")
+
     def edit_table(self):
         selected_item = self.tree.selection()
 
@@ -153,7 +189,8 @@ class RevenueScreen(tk.Frame):
         labels = ["Date (YYYY-MM-DD)", "Reg", "Credit", "Cash in Envelope"]
         entries = []
 
-        for i, (label_text, value) in enumerate(zip(labels, row_values)):
+        # We skip the first value (id) and assign remaining values to the fields
+        for i, (label_text, value) in enumerate(zip(labels, row_values[1:])):  # Skip the first value (ID)
             tk.Label(edit_window, text=label_text).grid(row=i, column=0, padx=10, pady=5)
             entry = tk.Entry(edit_window)
             entry.insert(0, value)  # Pre-fill with existing data
@@ -164,13 +201,18 @@ class RevenueScreen(tk.Frame):
         def save_changes():
             new_values = [entry.get() for entry in entries]
 
+            # Debugging: Print the date value from the entry
+            print(f"Date value entered: {new_values[0]}")
+
             # Validate date format
             try:
-                datetime.strptime(new_values[0], "%Y-%m-%d")  # Ensure correct format
+                # Try parsing the date to ensure it's in the correct format
+                new_values[0] = datetime.strptime(new_values[0], "%Y-%m-%d").date()
             except ValueError:
                 messagebox.showerror("Date Error", "Invalid date format. Use YYYY-MM-DD.")
                 return
 
+            # Update the database with new values, and include the item_id (row's ID)
             self.update_revenue_data(item_id, row_values[0], new_values)
             edit_window.destroy()
 
@@ -179,9 +221,7 @@ class RevenueScreen(tk.Frame):
 
     def update_revenue_data(self, item_id, old_date, new_values):
         try:
-            conn = mysql.connector.connect(
-                host="localhost", user="root", password="Cooldaisy662", database="store_manager"
-            )
+            conn = get_connection()
             cursor = conn.cursor()
 
             # Update the database
@@ -212,7 +252,7 @@ class RevenueScreen(tk.Frame):
             conn = get_connection()
             cursor = conn.cursor()
             cursor.execute("""
-                SELECT date, reg, credit, cashinenvelope 
+                SELECT id, date, reg, credit, cashinenvelope 
                 FROM revenue 
                 WHERE storename = %s
                 ORDER BY date DESC
@@ -233,19 +273,31 @@ class RevenueScreen(tk.Frame):
             cursor.close()
             conn.close()
 
-        except Error as e:
-            messagebox.showerror("Error", f"Error fetching revenue data: {e}")
+
+        except mysql.connector.Error as e:
+
+            messagebox.showerror("Database Error", f"Database error occurred: {e}")
+
+        except Exception as e:
+
+            messagebox.showerror("Error", f"An error occurred: {e}")
 
     def resize_columns(self):
-        """ Resize the columns based on the longest value in each column """
-        for col in self.columns:
-            max_length = 0
-            # Check all rows for the maximum length
-            for row in self.tree.get_children():
-                item = self.tree.item(row)
-                max_length = max(max_length, len(str(item['values'][self.columns.index(col)])))
-            # Add some padding to the width
-            self.tree.column(col, width=max_length * 10)
+        min_width = 80  # Minimum width for each column to ensure header is visible
+
+        for i, col in enumerate(self.columns):
+            # Set a minimal width to ensure header text is visible
+            self.tree.column(col, width=max(min_width, len(col) * 10))
+
+            max_length = len(col)
+
+            # Calculate the max content length for each column
+            for item in self.tree.get_children():
+                value = self.tree.item(item)["values"][i]
+                max_length = max(max_length, len(str(value)))
+
+            # Adjust the column width dynamically based on content length
+            self.tree.column(col, width=max(min_width, max_length * 10))
 
     def filter_by_date(self):
         start_date = self.start_date_entry.get()
