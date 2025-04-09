@@ -17,7 +17,6 @@ class RevenueScreen(tk.Frame):
         self.create_widgets()
         self.fetch_revenue_data()
 
-
     def create_widgets(self):
         # Store Name Label
         store_label = ttk.Label(self, text=f"Revenue - {self.store_name}", font=("Arial", 18, "bold"))
@@ -41,34 +40,35 @@ class RevenueScreen(tk.Frame):
 
         self.tree.grid(row=2, column=0, columnspan=3, padx=10, pady=10)
 
-        # Date Filter Inputs
-        tk.Label(self, text="Start Date (YYYY-MM-DD):").grid(row=4, column=0, padx=10, pady=5)
-        self.start_date_entry = tk.Entry(self)
-        self.start_date_entry.grid(row=4, column=1, padx=10, pady=5)
-
-        tk.Label(self, text="End Date (YYYY-MM-DD):").grid(row=4, column=2, padx=10, pady=5)
-        self.end_date_entry = tk.Entry(self)
-        self.end_date_entry.grid(row=4, column=3, padx=10, pady=5)
-
-        # Filter Button
-        filter_btn = ttk.Button(self, text="Filter", command=self.filter_by_date)
-        filter_btn.grid(row=4, column=4, padx=10, pady=5)
-
-        # Edit Table Button
+        # Row for the buttons (edit table, add row, delete row)
+        gap_row = 3  # The row after the table for buttons
         edit_btn = ttk.Button(self, text="Edit Table", command=self.edit_table)
-        edit_btn.grid(row=3, column=0, pady=5)
+        edit_btn.grid(row=gap_row, column=0, pady=5)
 
-        # Add Row Button
         add_row_btn = ttk.Button(self, text="Add Row", command=self.add_row)
-        add_row_btn.grid(row=3, column=1, pady=5)
+        add_row_btn.grid(row=gap_row, column=1, pady=5)
 
-        # Delete Row Button
         delete_button = ttk.Button(self, text="Delete Row", command=self.delete_row)
-        delete_button.grid(row=3, column=2, padx=10, pady=5, sticky="w")
+        delete_button.grid(row=gap_row, column=2, padx=10, pady=5, sticky="w")
 
-        # Clear Filter Button
+        # Adding gap below row buttons
+        gap_row += 1
+
+        # Date Filter Inputs (moved below row buttons, adjusted to be more compact horizontally)
+        tk.Label(self, text="Start Date (YYYY-MM-DD):").grid(row=gap_row, column=0, padx=1, pady=1, sticky="e")
+        self.start_date_entry = tk.Entry(self, width=12)  # Reduced width for better fitting
+        self.start_date_entry.grid(row=gap_row, column=1, padx=1, pady=2)
+
+        tk.Label(self, text="End Date (YYYY-MM-DD):").grid(row=gap_row, column=2, padx=1, pady=1, sticky="e")
+        self.end_date_entry = tk.Entry(self, width=12)  # Reduced width for better fitting
+        self.end_date_entry.grid(row=gap_row, column=3, padx=1, pady=2)
+
+        # Filter and Clear Filter Buttons (placed after the date filter inputs, more compact)
+        filter_btn = ttk.Button(self, text="Filter", command=self.filter_by_date)
+        filter_btn.grid(row=gap_row, column=4, padx=5, pady=5)
+
         clear_filter_btn = ttk.Button(self, text="Clear Filter", command=self.clear_filter)
-        clear_filter_btn.grid(row=3, column=3, pady=5)
+        clear_filter_btn.grid(row=gap_row, column=5, padx=5, pady=5)
 
     def add_row(self):
         """ Open a pop-up window to add a new revenue row """
@@ -193,7 +193,10 @@ class RevenueScreen(tk.Frame):
         for i, (label_text, value) in enumerate(zip(labels, row_values[1:])):  # Skip the first value (ID)
             tk.Label(edit_window, text=label_text).grid(row=i, column=0, padx=10, pady=5)
             entry = tk.Entry(edit_window)
-            entry.insert(0, value)  # Pre-fill with existing data
+            # If it's the date (i == 0), format it
+            if i == 0:
+                value = value.split(" ")[0]  # handle "YYYY-MM-DD 00:00:00"
+            entry.insert (0, value)  # Pre-fill with existing data
             entry.grid(row=i, column=1, padx=10, pady=5)
             entries.append(entry)
 
@@ -207,7 +210,7 @@ class RevenueScreen(tk.Frame):
             # Validate date format
             try:
                 # Try parsing the date to ensure it's in the correct format
-                new_values[0] = datetime.strptime(new_values[0], "%Y-%m-%d").date()
+                datetime.strptime(new_values[0], "%Y-%m-%d")
             except ValueError:
                 messagebox.showerror("Date Error", "Invalid date format. Use YYYY-MM-DD.")
                 return
@@ -219,22 +222,21 @@ class RevenueScreen(tk.Frame):
         save_button = ttk.Button(edit_window, text="Save", command=save_changes)
         save_button.grid(row=len(labels), columnspan=2, pady=10)
 
-    def update_revenue_data(self, item_id, old_date, new_values):
+    def update_revenue_data(self, item_id, record_id, new_values):
         try:
             conn = get_connection()
             cursor = conn.cursor()
 
-            # Update the database
             cursor.execute("""
                 UPDATE revenue 
                 SET date = %s, reg = %s, credit = %s, cashinenvelope = %s 
-                WHERE storename = %s AND date = %s
-            """, (*new_values, self.store_name, old_date))
+                WHERE id = %s
+            """, (*new_values, record_id))
 
             conn.commit()
 
             # Update Treeview display
-            self.tree.item(item_id, values=new_values)
+            self.tree.item(item_id, values=(record_id, *new_values))
 
             cursor.close()
             conn.close()
@@ -342,8 +344,11 @@ class RevenueScreen(tk.Frame):
 
     def clear_filter(self):
         """ Reset the table to show all data """
+        # Clear the date entry fields
+        self.start_date_entry.delete(0, tk.END)
+        self.end_date_entry.delete(0, tk.END)
         self.fetch_revenue_data()  # Fetches and displays all revenue data
-        messagebox.showinfo("Filter Cleared", "All revenue data is now displayed.")
+        messagebox.showinfo("Filter Cleared", "All revenue data will now be displayed.")
 
 if __name__ == "__main__":
     root = tk.Tk()
