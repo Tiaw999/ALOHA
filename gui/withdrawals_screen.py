@@ -6,11 +6,13 @@ import tkinter as tk
 from tkinter import ttk
 
 
-class WithdrawalsScreen(tk.Tk):
-    def __init__(self):
-        super().__init__()
-        self.title("Withdrawals Screen")
-        self.geometry("900x400")
+class WithdrawalsScreen(tk.Frame):
+    def __init__(self, master, store_name, previous_screen=None):
+        super().__init__(master)
+        self.master = master
+        self.store_name = store_name
+        self.previous_screen = previous_screen
+
         self.configure(bg='lightgray')
 
         # Back Button
@@ -27,7 +29,6 @@ class WithdrawalsScreen(tk.Tk):
         self.tree.heading("Emp Name", text="EMPNAME")
         self.tree.heading("Amount", text="AMOUNT")
         self.tree.heading("Notes", text="NOTES")
-
         self.tree.grid(row=1, column=0, columnspan=3, padx=10, pady=10)
 
         # Buttons
@@ -38,11 +39,11 @@ class WithdrawalsScreen(tk.Tk):
         self.add_row_button.grid(row=2, column=2, padx=10, pady=10)
 
         # Store Name Label
-        self.store_label = tk.Label(self, text="Store Name", bg="lightgray")
+        self.store_label = tk.Label(self, text=f"Store: {self.store_name}", bg="lightgray")
         self.store_label.grid(row=3, column=0, columnspan=3, pady=10)
 
     def go_back(self):
-        print("Back button clicked")
+        self.master.switch_screen(self.previous_screen.__class__, self.store_name)
 
     def edit_table(self):
         print("Edit Table clicked")
@@ -50,7 +51,7 @@ class WithdrawalsScreen(tk.Tk):
     def add_row(self):
         self.tree.insert("", "end", values=("", "", "", ""))
 
-
 if __name__ == "__main__":
-    app = WithdrawalsScreen()
-    app.mainloop()
+    root = tk.Tk()
+    app = WithdrawalsScreen(root, "Your Store")
+    root.mainloop()
