@@ -6,12 +6,19 @@ from db import get_connection
 import mysql.connector
 
 class RevenueScreen(tk.Frame):
-    def __init__(self, master, store_name, previous_screen):
+    def __init__(self, master, store_name, previous_screen, selected_month=None, selected_year=None):
         super().__init__(master)
         self.columns = ("ID", "Date", "Reg", "Credit", "Cash in Envelope")
         self.master = master
         self.store_name = store_name
         self.previous_screen = previous_screen
+        # Default selected_month and selected_year if not passed (for Manager)
+        if selected_month is None or selected_year is None:
+            self.selected_month = datetime.now().month
+            self.selected_year = datetime.now().year
+        else:
+            self.selected_month = selected_month
+            self.selected_year = selected_year
         self.master.geometry("900x600")
         self.master.title("Revenue")
         self.create_widgets()
@@ -207,15 +214,24 @@ class RevenueScreen(tk.Frame):
             # Debugging: Print the date value from the entry
             print(f"Date value entered: {new_values[0]}")
 
-            # Validate date format
+            # === Validate Date Format ===
             try:
-                # Try parsing the date to ensure it's in the correct format
                 datetime.strptime(new_values[0], "%Y-%m-%d")
             except ValueError:
                 messagebox.showerror("Date Error", "Invalid date format. Use YYYY-MM-DD.")
                 return
 
-            # Update the database with new values, and include the item_id (row's ID)
+            # === Validate Decimal Fields ===
+            for field_value, field_name in zip(new_values[1:], ["Reg", "Credit", "Cash in Envelope"]):
+                try:
+                    float_value = float(field_value)
+                    if float_value < 0:
+                        raise ValueError
+                except ValueError:
+                    messagebox.showerror("Input Error", f"{field_name} must be a non-negative number.")
+                    return
+
+            # If all validations pass, update the database
             self.update_revenue_data(item_id, row_values[0], new_values)
             edit_window.destroy()
 
@@ -253,13 +269,29 @@ class RevenueScreen(tk.Frame):
         try:
             conn = get_connection()
             cursor = conn.cursor()
-            cursor.execute("""
+
+            # Debug print to verify selected_month and selected_year
+            print(f"Fetching data for Month: {self.selected_month}, Year: {self.selected_year}")
+
+            # Base query to fetch revenue data for the store
+            query = """
                 SELECT id, date, reg, credit, cashinenvelope 
                 FROM revenue 
                 WHERE storename = %s
+                AND MONTH(date) = %s AND YEAR(date) = %s
                 ORDER BY date DESC
-            """, (self.store_name,))
+            """
+            query_params = [self.store_name, self.selected_month, self.selected_year]
+
+            # Execute the query with parameters
+            cursor.execute(query, tuple(query_params))
             data = cursor.fetchall()
+
+            # Debug print to check fetched data
+            print(f"Fetched Data: {data}")
+
+            if not data:
+                print("No data found for the given month/year.")
 
             # Clear the current entries in the table before inserting new ones
             for row in self.tree.get_children():
@@ -274,23 +306,14 @@ class RevenueScreen(tk.Frame):
 
             cursor.close()
             conn.close()
-
-
-        except mysql.connector.Error as e:
-
-            messagebox.showerror("Database Error", f"Database error occurred: {e}")
-
         except Exception as e:
-
-            messagebox.showerror("Error", f"An error occurred: {e}")
+            print(f"Error: {e}")
 
     def resize_columns(self):
         min_width = 80  # Minimum width for each column to ensure header is visible
 
         for i, col in enumerate(self.columns):
-            # Set a minimal width to ensure header text is visible
-            self.tree.column(col, width=max(min_width, len(col) * 10))
-
+            # Start with the length of the column header
             max_length = len(col)
 
             # Calculate the max content length for each column
@@ -298,8 +321,13 @@ class RevenueScreen(tk.Frame):
                 value = self.tree.item(item)["values"][i]
                 max_length = max(max_length, len(str(value)))
 
-            # Adjust the column width dynamically based on content length
+            # Adjust the column width dynamically based on content length, adding extra space for padding
             self.tree.column(col, width=max(min_width, max_length * 10))
+
+            # Optionally, make sure the header fits as well
+            header = self.tree.heading(col)["text"]
+            header_length = len(header)
+            self.tree.column(col, width=max(self.tree.column(col)["width"], header_length * 10))
 
     def filter_by_date(self):
         start_date = self.start_date_entry.get()
