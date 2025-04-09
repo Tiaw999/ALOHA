@@ -3,10 +3,13 @@ import tkinter as tk
 from tkinter import ttk
 
 class ExpensesScreen(tk.Frame):
-    def __init__(self, master, store_name):
+    def __init__(self, master, store_name, previous_screen):
         super().__init__(master)
         self.master = master
         self.store_name = store_name
+        self.previous_screen = previous_screen
+        self.master.geometry("900x600")
+        self.master.title("Expenses")
         self.pack(fill="both", expand=True)
         self.create_widgets()
 
@@ -48,5 +51,4 @@ class ExpensesScreen(tk.Frame):
         print("Edit table clicked")
 
     def go_back(self):
-        from gui.owner_home import OwnerHome
-        self.master.switch_screen(OwnerHome, self.store_name)
+        self.master.switch_screen(self.previous_screen.__class__, self.store_name)

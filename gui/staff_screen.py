@@ -1,36 +1,59 @@
+# staff_screen.py
+
 import tkinter as tk
 from tkinter import ttk
 
-
 class StaffScreen(tk.Frame):
-    def add_staff_row():
-        staff_table.insert("", "end", values=("New Employee", "New Hourly Rate", "New Bonus", "New Role", "New Password"))
+    def __init__(self, master, store_name, previous_screen):
+        super().__init__(master)
+        self.master = master
+        self.master.geometry("900x600")
+        self.store_name = store_name
+        self.previous_screen = previous_screen
+        self.master.title("Staff")
+        self.configure(bg="white")
+        self.pack(fill="both", expand=True)
 
-    # Create main window
-    staff_root = tk.Tk()
-    staff_root.title("Staff Home Screen")
-    staff_root.geometry("600x300")
+        self.create_widgets()
 
-    # Back and Edit buttons
-    tk.Button(staff_root, text="<-Back", bg="orange").grid(row=0, column=0, padx=5, pady=5)
-    tk.Button(staff_root, text="Staff", bg="yellow").grid(row=0, column=1, padx=5, pady=5)
-    tk.Button(staff_root, text="Edit Table", bg="green").grid(row=0, column=2, padx=5, pady=5)
+    def create_widgets(self):
+        # Back Button
+        back_button = tk.Button(self, text="<- Back", bg="orange", fg="black", font=("Arial", 12),
+                                command=self.go_back)
+        back_button.grid(row=0, column=0, padx=5, pady=5, sticky="w")
 
-    # Table frame
-    staff_frame = tk.Frame(staff_root)
-    staff_frame.grid(row=1, column=0, columnspan=3, padx=10, pady=10)
+        # Title Label
+        title_label = tk.Label(self, text="Staff", bg="yellow", font=("Arial", 16, "bold"))
+        title_label.grid(row=0, column=1, padx=5, pady=5)
 
-    # Create table
-    columns = ("Emp Name", "Hourly Rate", "Bonus Rate", "Role", "Password")
-    staff_table = ttk.Treeview(staff_frame, columns=columns, show="headings")
+        # Edit Table Button
+        edit_button = tk.Button(self, text="Edit Table", bg="green", fg="white", font=("Arial", 12),
+                                command=self.edit_table)
+        edit_button.grid(row=0, column=2, padx=5, pady=5, sticky="e")
 
-    for col in columns:
-        staff_table.heading(col, text=col)
-        staff_table.column(col, width=100)
+        # Table Frame
+        table_frame = tk.Frame(self)
+        table_frame.grid(row=1, column=0, columnspan=3, padx=10, pady=10)
 
-    staff_table.pack()
+        # Table Columns
+        columns = ("Emp Name", "Hourly Rate", "Bonus Rate", "Role", "Password")
+        self.staff_table = ttk.Treeview(table_frame, columns=columns, show="headings")
+        for col in columns:
+            self.staff_table.heading(col, text=col)
+            self.staff_table.column(col, width=120)
 
-    # Add row button
-    tk.Button(staff_root, text="Add row", bg="lightgreen", command=add_staff_row).grid(row=2, column=0, columnspan=3, pady=10)
+        self.staff_table.pack()
 
-    staff_root.mainloop()
+        # Add Row Button
+        add_row_button = tk.Button(self, text="Add Row", bg="lightgreen", fg="black", font=("Arial", 12),
+                                   command=self.add_staff_row)
+        add_row_button.grid(row=2, column=0, columnspan=3, pady=10)
+
+    def add_staff_row(self):
+        self.staff_table.insert("", "end", values=("New Employee", "New Hourly Rate", "New Bonus", "New Role", "New Password"))
+
+    def edit_table(self):
+        print("Edit Table clicked")
+
+    def go_back(self):
+        self.master.switch_screen(self.previous_screen.__class__, self.store_name)
