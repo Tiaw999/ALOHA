@@ -268,6 +268,9 @@ class RevenueScreen(tk.Frame):
         except Error as e:
             messagebox.showerror("Error", f"Error updating revenue data: {e}")
 
+    def get_selected_month_year(self):
+        return self.selected_month, self.selected_year
+
     def go_back(self):
         self.master.switch_screen(self.previous_screen.__class__, self.store_name)
 

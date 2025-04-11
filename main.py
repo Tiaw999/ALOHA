@@ -22,30 +22,37 @@ class Application(tk.Tk):
         self.switch_screen(LoginScreen)
 
     def switch_screen(self, screen_class, *args):
-        # Check if coming from OwnerHome
         selected_month, selected_year = None, None
-        if isinstance(self.current_screen, OwnerHome):
-            # Fetch selected month/year before destroying the screen
-            selected_month, selected_year = self.current_screen.get_selected_month_year()
+        previous_screen_ref = self.current_screen
+
+        # Screens that use month/year context
+        month_aware_screens = [OwnerHome, RevenueScreen, ExpensesScreen, PayrollScreen,
+                               StaffScreen, TimesheetScreen, WithdrawalsScreen,
+                               MerchandiseScreen, InvoiceScreen]
+
+        # If coming from a screen that uses month/year, get its values
+        if type(previous_screen_ref) in month_aware_screens:
+            selected_month, selected_year = previous_screen_ref.get_selected_month_year()
             if selected_month is None or selected_year is None:
                 print("Error: Could not retrieve valid month/year.")
-                return  # Exit if values are not available
+                return
 
         if self.current_screen is not None:
-            # Destroy the current screen
             self.current_screen.destroy()
 
-        # Check if the new screen needs the month/year
-        if screen_class in [RevenueScreen, ExpensesScreen, PayrollScreen, StaffScreen, TimesheetScreen, WithdrawalsScreen, MerchandiseScreen, InvoiceScreen]:  # Add other screens here that need the month/year
-            screen = screen_class(self, *args, previous_screen=self.current_screen,
-                                  selected_month=selected_month,
-                                  selected_year=selected_year)
+        # If going to a screen that uses month/year, pass the values
+        if screen_class in month_aware_screens:
+            screen = screen_class(
+                self, *args,
+                previous_screen=previous_screen_ref,
+                selected_month=selected_month,
+                selected_year=selected_year
+            )
         else:
-            # For screens that don't need the month/year, just pass the previous screen
-            screen = screen_class(self, *args, previous_screen=self.current_screen)
+            screen = screen_class(self, *args, previous_screen=previous_screen_ref)
 
-        self.current_screen = screen  # Set the new screen
-        self.current_screen.pack(fill=tk.BOTH, expand=True)  # Ensure it fills the window properly
+        self.current_screen = screen
+        self.current_screen.pack(fill=tk.BOTH, expand=True)
 
 def main():
     app = Application()

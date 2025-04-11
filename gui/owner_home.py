@@ -15,10 +15,17 @@ from gui.invoice_screen import InvoiceScreen
 
 
 class OwnerHome(tk.Frame):
-    def __init__(self, master, store_name, previous_screen):
+    def __init__(self, master, store_name, previous_screen, selected_month=None, selected_year=None):
         super().__init__(master)
         self.master = master
         self.store_name = store_name
+        # Default selected_month and selected_year if not passed (for when coming from login)
+        if selected_month is None or selected_year is None:
+            self.selected_month = datetime.now().month
+            self.selected_year = datetime.now().year
+        else:
+            self.selected_month = selected_month
+            self.selected_year = selected_year
         self.previous_screen = previous_screen
         self.master.title("Owner Home")
         self.master.geometry("900x600")
@@ -34,7 +41,6 @@ class OwnerHome(tk.Frame):
         date_frame.pack(pady=10, padx=20)
 
         # Get current month and year
-        current_month = datetime.now().strftime('%B')  # Current month as full name (e.g., "March")
         current_year = datetime.now().year  # Current year (e.g., 2025)
 
         months = [
@@ -50,7 +56,7 @@ class OwnerHome(tk.Frame):
 
         self.month_combobox = ttk.Combobox(date_frame, values=months)
         self.month_combobox.grid(row=0, column=1, padx=10, pady=5)
-        self.month_combobox.set(current_month)  # Set the default month to the current month
+        self.month_combobox.set(months[self.selected_month - 1])  # Set the default month to the current month
 
         # Year Dropdown (Combobox)
         year_label = ttk.Label(date_frame, text="Select Year:")
@@ -58,7 +64,7 @@ class OwnerHome(tk.Frame):
 
         self.year_combobox = ttk.Combobox(date_frame, values=years)
         self.year_combobox.grid(row=0, column=3, padx=10, pady=5)
-        self.year_combobox.set(str(current_year))  # Set the default year to the current year
+        self.year_combobox.set(str(self.selected_year))  # Set the default year to the current year
 
         # Frame for Buttons (Revenue, Expenses, etc.)
         button_frame = ttk.Frame(self)
@@ -119,7 +125,6 @@ class OwnerHome(tk.Frame):
 
     def go_to_revenue(self):
         print("Go to Revenue Screen")
-        month, year = self.get_selected_month_year()
         self.master.switch_screen(RevenueScreen, self.store_name)
 
     def go_to_expenses(self):
