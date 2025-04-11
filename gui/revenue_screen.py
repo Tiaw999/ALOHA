@@ -49,7 +49,7 @@ class RevenueScreen(tk.Frame):
 
         # Row for the buttons (edit table, add row, delete row)
         gap_row = 3  # The row after the table for buttons
-        edit_btn = ttk.Button(self, text="Edit Table", command=self.edit_table)
+        edit_btn = ttk.Button(self, text="Edit Row", command=self.edit_row)
         edit_btn.grid(row=gap_row, column=0, pady=5)
 
         add_row_btn = ttk.Button(self, text="Add Row", command=self.add_row)
@@ -117,6 +117,14 @@ class RevenueScreen(tk.Frame):
                 return
 
             try:
+                float(reg)
+                float(credit)
+                float(cash_in_envelope)
+            except ValueError:
+                messagebox.showerror("Input Error", "Reg, Credit, and Cash in Envelope must be numbers.")
+                return
+
+            try:
                 conn = get_connection()
                 cursor = conn.cursor()
                 cursor.execute("""
@@ -176,7 +184,7 @@ class RevenueScreen(tk.Frame):
             except Error as e:
                 messagebox.showerror("Error", f"Failed to delete row: {e}")
 
-    def edit_table(self):
+    def edit_row(self):
         selected_item = self.tree.selection()
 
         if not selected_item:
@@ -224,11 +232,9 @@ class RevenueScreen(tk.Frame):
             # === Validate Decimal Fields ===
             for field_value, field_name in zip(new_values[1:], ["Reg", "Credit", "Cash in Envelope"]):
                 try:
-                    float_value = float(field_value)
-                    if float_value < 0:
-                        raise ValueError
+                    float(field_value)
                 except ValueError:
-                    messagebox.showerror("Input Error", f"{field_name} must be a non-negative number.")
+                    messagebox.showerror("Input Error", f"{field_name} must be a number.")
                     return
 
             # If all validations pass, update the database
@@ -345,12 +351,10 @@ class RevenueScreen(tk.Frame):
             return
 
         try:
-            conn = mysql.connector.connect(
-                host="localhost", user="root", password="Cooldaisy662", database="store_manager"
-            )
+            conn = get_connection()
             cursor = conn.cursor()
             cursor.execute("""
-                SELECT date, reg, credit, cashinenvelope 
+                SELECT id, date, reg, credit, cashinenvelope 
                 FROM revenue 
                 WHERE storename = %s AND date BETWEEN %s AND %s
             """, (self.store_name, start_date, end_date))
