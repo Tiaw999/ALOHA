@@ -1,7 +1,7 @@
 ### timesheet_app.py
 import tkinter as tk
 from tkinter import ttk
-##pushing pus
+##pushing push
 
 class Loghour(tk.Frame):
     def __init__(self, root):
