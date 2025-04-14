@@ -3,7 +3,6 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from datetime import datetime
 from db import get_connection
-import mysql.connector
 
 class RevenueScreen(tk.Frame):
     def __init__(self, master, store_name, previous_screen, selected_month=None, selected_year=None):
@@ -81,7 +80,7 @@ class RevenueScreen(tk.Frame):
         """ Open a pop-up window to add a new revenue row """
         add_window = tk.Toplevel(self)
         add_window.title("Add Revenue Entry")
-        add_window.geometry("300x250")
+        add_window.geometry("300x260")
 
         tk.Label(add_window, text="Date (YYYY-MM-DD):").pack(pady=2)
         date_entry = tk.Entry(add_window)
@@ -144,9 +143,6 @@ class RevenueScreen(tk.Frame):
 
         save_btn = tk.Button(add_window, text="Save", command=save_entry)
         save_btn.pack(pady=10)
-
-        cancel_btn = tk.Button(add_window, text="Cancel", command=add_window.destroy)  # Cancel Button
-        cancel_btn.pack(pady=5)
 
         add_window.grab_set()  # Make window modal (prevents interaction with main window)
 
@@ -384,8 +380,3 @@ class RevenueScreen(tk.Frame):
         self.end_date_entry.delete(0, tk.END)
         self.fetch_revenue_data()  # Fetches and displays all revenue data
         messagebox.showinfo("Filter Cleared", "All revenue data will now be displayed.")
-
-if __name__ == "__main__":
-    root = tk.Tk()
-    app = RevenueScreen(root, "aloha", None)  # Replace "aloha" with the actual store name
-    root.mainloop()
