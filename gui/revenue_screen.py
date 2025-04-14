@@ -111,6 +111,13 @@ class RevenueScreen(tk.Frame):
 
             try:
                 date = datetime.strptime(date_str, "%Y-%m-%d").date()
+
+                # Check if the entered date is within the selected month and year
+                if date.month != self.selected_month or date.year != self.selected_year:
+                    messagebox.showerror("Date Error",
+                                         f"Please enter a date within {self.selected_month}/{self.selected_year}.")
+                    return
+
             except ValueError:
                 messagebox.showerror("Date Error", "Invalid date format. Use YYYY-MM-DD.")
                 return
@@ -220,7 +227,14 @@ class RevenueScreen(tk.Frame):
 
             # === Validate Date Format ===
             try:
-                datetime.strptime(new_values[0], "%Y-%m-%d")
+                date = datetime.strptime(new_values[0], "%Y-%m-%d").date()
+
+                # Check if the entered date is within the selected month and year
+                if date.month != self.selected_month or date.year != self.selected_year:
+                    messagebox.showerror("Date Error",
+                                         f"Please enter a date within {self.selected_month}/{self.selected_year}.")
+                    return
+
             except ValueError:
                 messagebox.showerror("Date Error", "Invalid date format. Use YYYY-MM-DD.")
                 return
