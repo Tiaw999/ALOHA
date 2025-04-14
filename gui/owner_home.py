@@ -15,10 +15,17 @@ from gui.invoice_screen import InvoiceScreen
 
 
 class OwnerHome(tk.Frame):
-    def __init__(self, master, store_name, previous_screen):
+    def __init__(self, master, store_name, previous_screen, selected_month=None, selected_year=None):
         super().__init__(master)
         self.master = master
         self.store_name = store_name
+        # Default selected_month and selected_year if not passed (for when coming from login)
+        if selected_month is None or selected_year is None:
+            self.selected_month = datetime.now().month
+            self.selected_year = datetime.now().year
+        else:
+            self.selected_month = selected_month
+            self.selected_year = selected_year
         self.previous_screen = previous_screen
         self.master.title("Owner Home")
         self.master.geometry("900x600")
@@ -34,7 +41,6 @@ class OwnerHome(tk.Frame):
         date_frame.pack(pady=10, padx=20)
 
         # Get current month and year
-        current_month = datetime.now().strftime('%B')  # Current month as full name (e.g., "March")
         current_year = datetime.now().year  # Current year (e.g., 2025)
 
         months = [
@@ -50,7 +56,7 @@ class OwnerHome(tk.Frame):
 
         self.month_combobox = ttk.Combobox(date_frame, values=months)
         self.month_combobox.grid(row=0, column=1, padx=10, pady=5)
-        self.month_combobox.set(current_month)  # Set the default month to the current month
+        self.month_combobox.set(months[self.selected_month - 1])  # Set the default month to the current month
 
         # Year Dropdown (Combobox)
         year_label = ttk.Label(date_frame, text="Select Year:")
@@ -58,11 +64,7 @@ class OwnerHome(tk.Frame):
 
         self.year_combobox = ttk.Combobox(date_frame, values=years)
         self.year_combobox.grid(row=0, column=3, padx=10, pady=5)
-        self.year_combobox.set(str(current_year))  # Set the default year to the current year
-
-        # Bind the selection of month or year to automatically show data for that combination
-        self.month_combobox.bind("<<ComboboxSelected>>", self.show_month_data)
-        self.year_combobox.bind("<<ComboboxSelected>>", self.show_month_data)
+        self.year_combobox.set(str(self.selected_year))  # Set the default year to the current year
 
         # Frame for Buttons (Revenue, Expenses, etc.)
         button_frame = ttk.Frame(self)
@@ -100,11 +102,26 @@ class OwnerHome(tk.Frame):
         # Force a redraw of widgets to resolve any rendering issues
         self.update()
 
-    def show_month_data(self, event):
-        selected_month = self.month_combobox.get()
-        selected_year = self.year_combobox.get()
-        print(f"Displaying data for {selected_month} {selected_year}")
-        # Logic to filter data by the selected month and year goes here
+    def get_selected_month_year(self):
+        # Get the selected month and year from the comboboxes
+        selected_month = self.month_combobox.get()  # This will be a string like "April"
+        selected_year = self.year_combobox.get()  # This will be a string like "2025"
+
+        # Convert the month name to its corresponding integer (1 for January, 2 for February, etc.)
+        month_names = [
+            "January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December"
+        ]
+
+        if selected_month in month_names:
+            selected_month_int = month_names.index(selected_month) + 1  # Convert to 1-12
+        else:
+            print("Error: Invalid month selected.")
+            return None, None  # Return None if invalid month
+
+        selected_year_int = int(selected_year)  # Convert year to an integer
+
+        return selected_month_int, selected_year_int  # Return the month and year as integers
 
     def go_to_revenue(self):
         print("Go to Revenue Screen")
