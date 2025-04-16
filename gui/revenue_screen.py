@@ -177,13 +177,11 @@ class RevenueScreen(tk.Frame):
                 cursor.execute("DELETE FROM revenue WHERE id = %s", (row_id,))
                 conn.commit()
 
-                # Remove the row from the Treeview
-                self.tree.delete(selected_item)
-
                 cursor.close()
                 conn.close()
 
                 messagebox.showinfo("Success", "Row deleted successfully!")
+                self.fetch_revenue_data()  # Refresh table
             except Error as e:
                 messagebox.showerror("Error", f"Failed to delete row: {e}")
 
@@ -267,13 +265,11 @@ class RevenueScreen(tk.Frame):
 
             conn.commit()
 
-            # Update Treeview display
-            self.tree.item(item_id, values=(record_id, *new_values))
-
             cursor.close()
             conn.close()
 
             messagebox.showinfo("Success", "Revenue record updated successfully!")
+            self.fetch_revenue_data()  # Refresh table
 
         except Error as e:
             messagebox.showerror("Error", f"Error updating revenue data: {e}")

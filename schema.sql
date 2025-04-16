@@ -156,9 +156,9 @@ END;
 
 CREATE PROCEDURE update_expense (
     IN p_id INT,
+    IN p_date DATE,
     IN p_expensetype VARCHAR(50),
-    IN p_expensevalue DECIMAL(10,2),
-    IN p_date DATE
+    IN p_expensevalue DECIMAL(10,2)
 )
 BEGIN
     -- Call the trigger automatically (this is done by MySQL once update occurs)
