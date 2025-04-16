@@ -1,7 +1,7 @@
-# loghours_screen.py
 import tkinter as tk
 from tkinter import ttk
-
+from datetime import datetime
+##push changes
 class LogHours(tk.Frame):
     def __init__(self, root, store_name, previous_screen):
         super().__init__(root)
@@ -11,55 +11,133 @@ class LogHours(tk.Frame):
         self.root.geometry("900x600")
         self.root.title("Log Hours")
 
-        self.pack(fill=tk.BOTH, expand=True)
+        self.entries = []
 
-        # Back Button - Top Left
-        back_button = tk.Button(self, text="<- Back", command=self.go_back)
-        back_button.place(x=10, y=10)
+        # Title label
+        label = tk.Label(self, text="Employee Hours", font=("Arial", 16))
+        label.pack(pady=10)
 
-        # Form Title
-        tk.Label(self, text="Enter the following:").grid(row=1, columnspan=4, pady=20)
+        # Back button at the top-left
+        back_button = tk.Button(self, text="← Back", command=self.go_back)
+        back_button.pack(anchor="nw", padx=10, pady=5)
 
-        # Clock In
-        tk.Label(self, text="Clock In time:").grid(row=2, column=0, sticky='w', padx=10)
-        self.clock_in_hr = tk.Entry(self, width=5)
-        self.clock_in_hr.grid(row=2, column=1)
-        self.clock_in_min = tk.Entry(self, width=5)
-        self.clock_in_min.grid(row=2, column=2)
-        self.clock_in_ampm = ttk.Combobox(self, values=["AM", "PM"], width=3)
-        self.clock_in_ampm.grid(row=2, column=3)
+        # Treeview to show logged hours
+        self.tree = ttk.Treeview(self, columns=("name", "start", "end", "hours"), show="headings", selectmode="browse")
+        self.tree.heading("name", text="Employee Name")
+        self.tree.heading("start", text="Start Time")
+        self.tree.heading("end", text="End Time")
+        self.tree.heading("hours", text="Hours Worked")
+        self.tree.column("name", width=150)
+        self.tree.column("start", width=150)
+        self.tree.column("end", width=150)
+        self.tree.column("hours", width=100)
+        self.tree.pack(pady=10)
 
-        # Clock Out
-        tk.Label(self, text="Clock Out time:").grid(row=3, column=0, sticky='w', padx=10)
-        self.clock_out_hr = tk.Entry(self, width=5)
-        self.clock_out_hr.grid(row=3, column=1)
-        self.clock_out_min = tk.Entry(self, width=5)
-        self.clock_out_min.grid(row=3, column=2)
-        self.clock_out_ampm = ttk.Combobox(self, values=["AM", "PM"], width=3)
-        self.clock_out_ampm.grid(row=3, column=3)
+        # Frame for input fields
+        entry_frame = tk.Frame(self)
+        entry_frame.pack(pady=10)
 
-        # Register In
-        tk.Label(self, text="Reg $ In:").grid(row=4, column=0, sticky='w', padx=10)
-        self.reg_in = tk.Entry(self)
-        self.reg_in.grid(row=4, column=1, columnspan=2, sticky='w')
+        # Entry for employee name
+        tk.Label(entry_frame, text="Name:").grid(row=0, column=0, padx=5)
+        self.name_entry = tk.Entry(entry_frame)
+        self.name_entry.grid(row=0, column=1, padx=5)
 
-        # Register Out
-        tk.Label(self, text="Reg $ Out:").grid(row=5, column=0, sticky='w', padx=10)
-        self.reg_out = tk.Entry(self)
-        self.reg_out.grid(row=5, column=1, columnspan=2, sticky='w')
+        # Entry for start time
+        tk.Label(entry_frame, text="Start Time (HH:MM):").grid(row=0, column=2, padx=5)
+        self.start_entry = tk.Entry(entry_frame)
+        self.start_entry.grid(row=0, column=3, padx=5)
 
-        # Enter Button - Styled Blue
-        self.enter_button = tk.Button(
-            self,
-            text="Enter",
-            bg="#007bff",  # Bootstrap blue
-            fg="white",    # White text
-            activebackground="#0056b3",  # Darker blue on click
-            activeforeground="white"
-        )
-        self.enter_button.grid(row=6, column=0, columnspan=4, pady=20)
+        # Entry for end time
+        tk.Label(entry_frame, text="End Time (HH:MM):").grid(row=0, column=4, padx=5)
+        self.end_entry = tk.Entry(entry_frame)
+        self.end_entry.grid(row=0, column=5, padx=5)
+
+        # Buttons
+        button_frame = tk.Frame(self)
+        button_frame.pack(pady=10)
+
+        add_btn = tk.Button(button_frame, text="Add", command=self.add_entry)
+        add_btn.grid(row=0, column=0, padx=5)
+
+        edit_btn = tk.Button(button_frame, text="Edit", command=self.edit_entry)
+        edit_btn.grid(row=0, column=1, padx=5)
+
+        delete_btn = tk.Button(button_frame, text="Delete", command=self.delete_entry)
+        delete_btn.grid(row=0, column=2, padx=5)
+
+    def add_entry(self):
+        name = self.name_entry.get().strip()
+        start_time = self.start_entry.get().strip()
+        end_time = self.end_entry.get().strip()
+
+        if not name or not start_time or not end_time:
+            messagebox.showerror("Input Error", "All fields (name, start time, end time) are required.")
+            return
+
+        try:
+            start_dt = datetime.strptime(start_time, "%H:%M")
+            end_dt = datetime.strptime(end_time, "%H:%M")
+            if end_dt < start_dt:
+                end_dt = end_dt.replace(day=start_dt.day + 1)  # assume shift goes past midnight
+            duration = (end_dt - start_dt).total_seconds() / 3600
+            hours_worked = round(duration, 2)
+        except ValueError:
+            messagebox.showerror("Format Error", "Time format must be HH:MM (24-hour).")
+            return
+
+        self.entries.append((name, start_time, end_time, hours_worked))
+        self.tree.insert("", "end", values=(name, start_time, end_time, hours_worked))
+
+        self.name_entry.delete(0, tk.END)
+        self.start_entry.delete(0, tk.END)
+        self.end_entry.delete(0, tk.END)
+
+    def edit_entry(self):
+        selected = self.tree.selection()
+        if not selected:
+            messagebox.showerror("Selection Error", "Please select an entry to edit.")
+            return
+
+        name = self.name_entry.get().strip()
+        start_time = self.start_entry.get().strip()
+        end_time = self.end_entry.get().strip()
+
+        if not name or not start_time or not end_time:
+            messagebox.showerror("Input Error", "All fields are required.")
+            return
+
+        try:
+            start_dt = datetime.strptime(start_time, "%H:%M")
+            end_dt = datetime.strptime(end_time, "%H:%M")
+            if end_dt < start_dt:
+                end_dt = end_dt.replace(day=start_dt.day + 1)
+            duration = (end_dt - start_dt).total_seconds() / 3600
+            hours_worked = round(duration, 2)
+        except ValueError:
+            messagebox.showerror("Format Error", "Time format must be HH:MM (24-hour).")
+            return
+
+        index = self.tree.index(selected[0])
+        self.entries[index] = (name, start_time, end_time, hours_worked)
+        self.tree.item(selected[0], values=(name, start_time, end_time, hours_worked))
+
+        self.name_entry.delete(0, tk.END)
+        self.start_entry.delete(0, tk.END)
+        self.end_entry.delete(0, tk.END)
+
+    def delete_entry(self):
+        selected = self.tree.selection()
+        if not selected:
+            messagebox.showerror("Selection Error", "Please select an entry to delete.")
+            return
+
+        index = self.tree.index(selected[0])
+        del self.entries[index]
+        self.tree.delete(selected[0])
+
+        self.name_entry.delete(0, tk.END)
+        self.start_entry.delete(0, tk.END)
+        self.end_entry.delete(0, tk.END)
 
     def go_back(self):
-        print("Back to previous screen")
-        if self.previous_screen:
-            self.root.switch_screen(self.previous_screen.__class__, self.store_name)
+        self.master.switch_screen(self.previous_screen.__class__, self.store_name)
