@@ -80,77 +80,108 @@ class PayrollScreen(tk.Frame):
         clear_filter_btn.grid(row=gap_row, column=5, padx=5, pady=5)
 
     def add_row(self):
-        """ Open a pop-up window to add a new payroll row """
-        add_window = tk.Toplevel(self)
+        # Create a modal window for adding payroll data
+        add_window = tk.Toplevel(self)  # Create a new window (modal)
         add_window.title("Add Payroll Entry")
-        add_window.geometry("300x300")
 
-        tk.Label(add_window, text="Employee Name:").pack(pady=2)
-        empname_entry = tk.Entry(add_window)
-        empname_entry.pack(pady=2)
+        # Create form frame inside the new window
+        self.form_frame = tk.Frame(add_window)
+        self.form_frame.pack(pady=10)
 
-        tk.Label(add_window, text="Regular Pay:").pack(pady=2)
-        regularpay_entry = tk.Entry(add_window)
-        regularpay_entry.pack(pady=2)
+        # Fetch employee names from the database for the dropdown
+        try:
+            conn = get_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT name FROM staff WHERE storename = %s", (self.store_name,))
+            employee_names = [row[0] for row in cursor.fetchall()]
+            cursor.close()
+            conn.close()
 
-        tk.Label(add_window, text="Bonus:").pack(pady=2)
-        bonus_entry = tk.Entry(add_window)
-        bonus_entry.pack(pady=2)
-
-        tk.Label(add_window, text="Pay Date (YYYY-MM-DD):").pack(pady=2)
-        paydate_entry = tk.Entry(add_window)
-        paydate_entry.pack(pady=2)
-
-        def save_entry():
-            """ Save data and close window """
-            empname = empname_entry.get().strip()
-            regularpay = regularpay_entry.get().strip()
-            bonus = bonus_entry.get().strip()
-            paydate_str = paydate_entry.get().strip()
-
-            if not empname or not regularpay or not bonus or not paydate_str:
-                messagebox.showwarning("Input Error", "All fields are required.")
+            if not employee_names:
+                messagebox.showwarning("No Employees", "No employees found for this store.")
                 return
+        except Error as e:
+            messagebox.showerror("Error", f"Error fetching employees: {e}")
+            return
+        # Sort employee names alphabetically
+        employee_names.sort()
 
-            try:
-                paydate = datetime.strptime(paydate_str, "%Y-%m-%d").date()
-                # Check if the entered date is within the selected month and year
-                if paydate.month != self.selected_month or paydate.year != self.selected_year:
-                    messagebox.showerror("Date Error",
-                                         f"Please enter a date within {self.selected_month}/{self.selected_year}.")
-            except ValueError:
-                messagebox.showerror("Date Error", "Invalid date format. Use YYYY-MM-DD.")
+        # Employee Name dropdown
+        tk.Label(self.form_frame, text="Employee Name").grid(row=0, column=0, padx=10, pady=5)
+        self.empname_var = tk.StringVar()  # Variable to store selected employee name
+        self.empname_dropdown = ttk.Combobox(self.form_frame, textvariable=self.empname_var, values=employee_names)
+        self.empname_dropdown.grid(row=0, column=1, padx=10, pady=5)
+
+        # Regular Pay field
+        tk.Label(self.form_frame, text="Regular Pay").grid(row=1, column=0, padx=10, pady=5)
+        self.regularpay_entry = tk.Entry(self.form_frame)
+        self.regularpay_entry.grid(row=1, column=1, padx=10, pady=5)
+
+        # Bonus field
+        tk.Label(self.form_frame, text="Bonus").grid(row=2, column=0, padx=10, pady=5)
+        self.bonus_entry = tk.Entry(self.form_frame)
+        self.bonus_entry.grid(row=2, column=1, padx=10, pady=5)
+
+        # Pay Date field
+        tk.Label(self.form_frame, text="Pay Date (YYYY-MM-DD)").grid(row=3, column=0, padx=10, pady=5)
+        self.paydate_entry = tk.Entry(self.form_frame)
+        self.paydate_entry.grid(row=3, column=1, padx=10, pady=5)
+
+        # Save button
+        save_button = ttk.Button(self.form_frame, text="Save Entry", command=lambda: self.save_entry(add_window))
+        save_button.grid(row=4, columnspan=2, pady=10)
+
+        # Make the new window modal
+        add_window.grab_set()  # Prevent interaction with the main window until this window is closed
+
+    def save_entry(self, add_window):
+        """ Save data and close window """
+        empname = self.empname_var.get().strip()
+        regularpay = self.regularpay_entry.get().strip()
+        bonus = self.bonus_entry.get().strip()
+        paydate_str = self.paydate_entry.get().strip()
+
+        # Validate inputs
+        if not empname or not regularpay or not bonus or not paydate_str:
+            messagebox.showwarning("Input Error", "All fields are required.")
+            return
+
+        try:
+            paydate = datetime.strptime(paydate_str, "%Y-%m-%d").date()
+            # Check if the entered date is within the selected month and year
+            if paydate.month != self.selected_month or paydate.year != self.selected_year:
+                messagebox.showerror("Date Error",
+                                     f"Please enter a date within {self.selected_month}/{self.selected_year}.")
                 return
+        except ValueError:
+            messagebox.showerror("Date Error", "Invalid date format. Use YYYY-MM-DD.")
+            return
 
-            try:
-                float(regularpay)
-                float(bonus)
-            except ValueError:
-                messagebox.showerror("Input Error", "Regular Pay and Bonus must be numbers.")
-                return
+        try:
+            float(regularpay)
+            float(bonus)
+        except ValueError:
+            messagebox.showerror("Input Error", "Regular Pay and Bonus must be numbers.")
+            return
 
-            try:
-                conn = get_connection()
-                cursor = conn.cursor()
-                cursor.execute("""
-                    INSERT INTO payroll (empname, storename, regularpay, bonus, paydate)
-                    VALUES (%s, %s, %s, %s, %s)
-                """, (empname, self.store_name, regularpay, bonus, paydate))
-                conn.commit()
-                cursor.close()
-                conn.close()
+        # Attempt to save to database
+        try:
+            conn = get_connection()
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO payroll (empname, storename, regularpay, bonus, paydate)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (empname, self.store_name, regularpay, bonus, paydate))
+            conn.commit()
+            cursor.close()
+            conn.close()
 
-                messagebox.showinfo("Success", "New payroll record added successfully!")
-                self.fetch_payroll_data()  # Refresh table
-                add_window.destroy()  # Close window after saving
+            messagebox.showinfo("Success", "New payroll record added successfully!")
+            self.fetch_payroll_data()  # Refresh table
+            add_window.destroy()  # Close the modal window after saving
 
-            except Error as e:
-                messagebox.showerror("Error", f"Error adding payroll data: {e}")
-
-        save_btn = tk.Button(add_window, text="Save", command=save_entry)
-        save_btn.pack(pady=10)
-
-        add_window.grab_set()  # Make window modal (prevents interaction with main window)
+        except Error as e:
+            messagebox.showerror("Error", f"Error adding payroll data: {e}")
 
     def delete_row(self):
         """ Deletes a selected row from the Treeview and the database """
@@ -203,16 +234,58 @@ class PayrollScreen(tk.Frame):
         labels = ["Employee Name", "Store Name", "Regular Pay", "Bonus", "Pay Date"]
         entries = []
 
-        # We skip the first value (id) and assign remaining values to the fields
-        for i, (label_text, value) in enumerate(zip(labels, row_values[1:])):  # Skip the first value (ID)
-            tk.Label(edit_window, text=label_text).grid(row=i, column=0, padx=10, pady=5)
-            entry = tk.Entry(edit_window)
+        # Create form frame inside the new window
+        self.form_frame = tk.Frame(edit_window)
+        self.form_frame.pack(pady=10)
+
+        # Fetch employee names from the database for the dropdown
+        try:
+            conn = get_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT name FROM staff WHERE storename = %s", (self.store_name,))
+            employee_names = [row[0] for row in cursor.fetchall()]
+            cursor.close()
+            conn.close()
+
+            if not employee_names:
+                messagebox.showwarning("No Employees", "No employees found for this store.")
+                return
+        except Error as e:
+            messagebox.showerror("Error", f"Error fetching employees: {e}")
+            return
+
+        # Sort employee names alphabetically
+        employee_names.sort()
+        # Set default employee name (this is based on row_values)
+        employee_name = row_values[1]  # Assuming employee name is in index 1 of row_values
+
+        # Employee Name dropdown
+        tk.Label(self.form_frame, text="Employee Name").grid(row=0, column=0, padx=10, pady=5)
+        self.empname_var = tk.StringVar()  # Variable to store selected employee name
+        self.empname_dropdown = ttk.Combobox(self.form_frame, textvariable=self.empname_var, values=employee_names)
+        self.empname_dropdown.set(employee_name)  # Set current employee name from row_values
+        self.empname_dropdown.grid(row=0, column=1, padx=10, pady=5)
+
+        # Loop through the rest of the fields
+        for i, (label_text, value) in enumerate(
+                zip(labels[1:], row_values[2:])):  # Skip the first value (ID and Employee)
+            tk.Label(self.form_frame, text=label_text).grid(row=i + 1, column=0, padx=10, pady=5)
+            entry = tk.Entry(self.form_frame)
+
             # If it's the pay date (i == 4), format it
-            if i == 4:
-                value = value.split(" ")[0]  # handle "YYYY-MM-DD 00:00:00"
+            if i == 3:  # Pay date is at index 3 in labels
+                value = value.split(" ")[0]  # Handle "YYYY-MM-DD 00:00:00"
+
             entry.insert(0, value)  # Pre-fill with existing data
-            entry.grid(row=i, column=1, padx=10, pady=5)
+            entry.grid(row=i + 1, column=1, padx=10, pady=5)
             entries.append(entry)
+
+        # Save button
+        save_button = ttk.Button(self.form_frame, text="Save Entry",
+                                 command=lambda: self.save_edited_entry(item_id, entries))
+        save_button.grid(row=len(labels), columnspan=2, pady=10)
+
+        edit_window.grab_set()  # Make window modal
 
         # Save button
         def save_changes():

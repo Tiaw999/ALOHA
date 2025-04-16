@@ -5,6 +5,7 @@ USE store_manager;
 CREATE TABLE IF NOT EXISTS stores (
     storename VARCHAR(50) NOT NULL PRIMARY KEY
 );
+
 CREATE TABLE IF NOT EXISTS staff (
     name VARCHAR(50) NOT NULL,
     storename VARCHAR(50) NOT NULL,
@@ -15,6 +16,7 @@ CREATE TABLE IF NOT EXISTS staff (
     PRIMARY KEY(name, storename),
     FOREIGN KEY(storename) REFERENCES stores(storename)
 );
+
 CREATE TABLE IF NOT EXISTS expenses (
     id INT AUTO_INCREMENT PRIMARY KEY,
     storename VARCHAR(50),
