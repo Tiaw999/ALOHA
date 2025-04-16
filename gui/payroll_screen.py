@@ -1,5 +1,6 @@
 # payroll_screen.py
 # payroll_screen.py
+from mysql.connector import Error
 import tkinter as tk
 from tkinter import ttk, messagebox
 from datetime import datetime
@@ -88,10 +89,6 @@ class PayrollScreen(tk.Frame):
         empname_entry = tk.Entry(add_window)
         empname_entry.pack(pady=2)
 
-        tk.Label(add_window, text="Store Name:").pack(pady=2)
-        storename_entry = tk.Entry(add_window)
-        storename_entry.pack(pady=2)
-
         tk.Label(add_window, text="Regular Pay:").pack(pady=2)
         regularpay_entry = tk.Entry(add_window)
         regularpay_entry.pack(pady=2)
@@ -107,17 +104,20 @@ class PayrollScreen(tk.Frame):
         def save_entry():
             """ Save data and close window """
             empname = empname_entry.get().strip()
-            storename = storename_entry.get().strip()
             regularpay = regularpay_entry.get().strip()
             bonus = bonus_entry.get().strip()
             paydate_str = paydate_entry.get().strip()
 
-            if not empname or not storename or not regularpay or not bonus or not paydate_str:
+            if not empname or not regularpay or not bonus or not paydate_str:
                 messagebox.showwarning("Input Error", "All fields are required.")
                 return
 
             try:
                 paydate = datetime.strptime(paydate_str, "%Y-%m-%d").date()
+                # Check if the entered date is within the selected month and year
+                if paydate.month != self.selected_month or paydate.year != self.selected_year:
+                    messagebox.showerror("Date Error",
+                                         f"Please enter a date within {self.selected_month}/{self.selected_year}.")
             except ValueError:
                 messagebox.showerror("Date Error", "Invalid date format. Use YYYY-MM-DD.")
                 return
@@ -135,7 +135,7 @@ class PayrollScreen(tk.Frame):
                 cursor.execute("""
                     INSERT INTO payroll (empname, storename, regularpay, bonus, paydate)
                     VALUES (%s, %s, %s, %s, %s)
-                """, (empname, storename, regularpay, bonus, paydate))
+                """, (empname, self.store_name, regularpay, bonus, paydate))
                 conn.commit()
                 cursor.close()
                 conn.close()
@@ -152,3 +152,239 @@ class PayrollScreen(tk.Frame):
 
         add_window.grab_set()  # Make window modal (prevents interaction with main window)
 
+    def delete_row(self):
+        """ Deletes a selected row from the Treeview and the database """
+        selected_item = self.tree.selection()  # Get the selected item
+
+        if not selected_item:
+            messagebox.showwarning("Selection Error", "Please select a row to delete.")
+            return
+
+        # Get the ID of the selected row (assuming ID is in the first column)
+        row_id = self.tree.item(selected_item, "values")[0]  # Assuming ID is the first value in the row
+
+        # Confirm the deletion with the user
+        confirm = messagebox.askyesno("Confirm Deletion",
+                                      f"Are you sure you want to delete the record with ID {row_id}?")
+
+        if confirm:
+            try:
+                conn = get_connection()
+                cursor = conn.cursor()
+                # Delete the row with the corresponding ID from the payroll table
+                cursor.execute("DELETE FROM payroll WHERE id = %s", (row_id,))
+                conn.commit()
+
+                cursor.close()
+                conn.close()
+
+                messagebox.showinfo("Success", "Row deleted successfully!")
+                self.fetch_payroll_data()  # Refresh table
+            except Error as e:
+                messagebox.showerror("Error", f"Failed to delete row: {e}")
+
+    def edit_row(self):
+        selected_item = self.tree.selection()
+
+        if not selected_item:
+            messagebox.showwarning("Selection Error", "Please select a row to edit.")
+            return
+
+        # Get the current values of the selected row
+        row_values = self.tree.item(selected_item, "values")
+
+        # Open the edit dialog
+        self.open_edit_dialog(selected_item, row_values)
+
+    def open_edit_dialog(self, item_id, row_values):
+        edit_window = tk.Toplevel(self)
+        edit_window.title("Edit Payroll Entry")
+
+        labels = ["Employee Name", "Store Name", "Regular Pay", "Bonus", "Pay Date"]
+        entries = []
+
+        # We skip the first value (id) and assign remaining values to the fields
+        for i, (label_text, value) in enumerate(zip(labels, row_values[1:])):  # Skip the first value (ID)
+            tk.Label(edit_window, text=label_text).grid(row=i, column=0, padx=10, pady=5)
+            entry = tk.Entry(edit_window)
+            # If it's the pay date (i == 4), format it
+            if i == 4:
+                value = value.split(" ")[0]  # handle "YYYY-MM-DD 00:00:00"
+            entry.insert(0, value)  # Pre-fill with existing data
+            entry.grid(row=i, column=1, padx=10, pady=5)
+            entries.append(entry)
+
+        # Save button
+        def save_changes():
+            new_values = [entry.get() for entry in entries]
+
+            # === Validate Input Fields ===
+            for field_value, field_name in zip(new_values[:4], ["Employee Name", "Store Name", "Regular Pay", "Bonus"]):
+                if not field_value.strip():
+                    messagebox.showwarning("Input Error", f"{field_name} is required.")
+                    return
+
+            try:
+                # Validate Pay Date
+                paydate = datetime.strptime(new_values[4], "%Y-%m-%d").date()
+                # Check if the entered date is within the selected month and year
+                if paydate.month != self.selected_month or paydate.year != self.selected_year:
+                    messagebox.showerror("Date Error",
+                                         f"Please enter a date within {self.selected_month}/{self.selected_year}.")
+            except ValueError:
+                messagebox.showerror("Date Error", "Invalid date format. Use YYYY-MM-DD.")
+                return
+
+            try:
+                # Validate Regular Pay and Bonus as numbers
+                float(new_values[2])  # Regular Pay
+                float(new_values[3])  # Bonus
+            except ValueError:
+                messagebox.showerror("Input Error", "Regular Pay and Bonus must be valid numbers.")
+                return
+
+            # If all validations pass, update the database
+            self.update_payroll_data(item_id, new_values)
+            edit_window.destroy()
+
+        save_button = ttk.Button(edit_window, text="Save", command=save_changes)
+        save_button.grid(row=len(labels), columnspan=2, pady=10)
+
+    def update_payroll_data(self, record_id, new_values):
+        try:
+            conn = get_connection()
+            cursor = conn.cursor()
+
+            cursor.execute("""
+                UPDATE payroll 
+                SET empname = %s, storename = %s, regularpay = %s, bonus = %s, paydate = %s
+                WHERE id = %s
+            """, (*new_values, record_id))
+
+            conn.commit()
+
+            cursor.close()
+            conn.close()
+
+            messagebox.showinfo("Success", "Payroll record updated successfully!")
+            self.fetch_payroll_data()  # Refresh table with updated data
+
+        except Error as e:
+            messagebox.showerror("Error", f"Error updating payroll data: {e}")
+
+    def get_selected_month_year(self):
+        return self.selected_month, self.selected_year
+
+    def go_back(self):
+        self.master.switch_screen(self.previous_screen.__class__, self.store_name)
+
+    def fetch_payroll_data(self):
+        try:
+            conn = get_connection()
+            cursor = conn.cursor()
+
+            # Debug print to verify selected_month and selected_year
+            print(f"Fetching data for Month: {self.selected_month}, Year: {self.selected_year}")
+
+            # Base query to fetch payroll data for the store and date
+            query = """
+                SELECT id, empname, storename, regularpay, bonus, paydate 
+                FROM payroll 
+                WHERE storename = %s
+                AND MONTH(paydate) = %s AND YEAR(paydate) = %s
+                ORDER BY paydate DESC
+            """
+            query_params = [self.store_name, self.selected_month, self.selected_year]
+
+            # Execute the query with parameters
+            cursor.execute(query, tuple(query_params))
+            data = cursor.fetchall()
+
+            # Debug print to check fetched data
+            print(f"Fetched Data: {data}")
+
+            if not data:
+                print("No payroll data found for the given month/year.")
+
+            # Clear the current entries in the table before inserting new ones
+            for row in self.tree.get_children():
+                self.tree.delete(row)
+
+            # Insert the fetched data into the Treeview
+            for row in data:
+                self.tree.insert("", "end", values=row)
+
+            # Resize columns to fit content
+            self.resize_columns()
+
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            print(f"Error: {e}")
+
+    def resize_columns(self):
+        min_width = 80  # Minimum width for each column to ensure header is visible
+
+        for i, col in enumerate(self.columns):
+            # Start with the length of the column header
+            max_length = len(col)
+
+            # Calculate the max content length for each column
+            for item in self.tree.get_children():
+                value = self.tree.item(item)["values"][i]
+                max_length = max(max_length, len(str(value)))
+
+            # Adjust the column width dynamically based on content length, adding extra space for padding
+            self.tree.column(col, width=max(min_width, max_length * 10))
+
+            # Optionally, make sure the header fits as well
+            header = self.tree.heading(col)["text"]
+            header_length = len(header)
+            self.tree.column(col, width=max(self.tree.column(col)["width"], header_length * 10))
+
+    def filter_by_date(self):
+        start_date = self.start_date_entry.get()
+        end_date = self.end_date_entry.get()
+
+        if not start_date or not end_date:
+            messagebox.showwarning("Input Error", "Please enter both start and end dates.")
+            return
+
+        try:
+            start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
+            end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
+        except ValueError:
+            messagebox.showerror("Date Error", "Invalid date format. Use YYYY-MM-DD.")
+            return
+
+        try:
+            conn = get_connection()
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT id, empname, storename, regularpay, bonus, paydate
+                FROM payroll
+                WHERE storename = %s AND paydate BETWEEN %s AND %s
+            """, (self.store_name, start_date, end_date))
+
+            data = cursor.fetchall()
+
+            # Clear table before adding filtered data
+            for row in self.tree.get_children():
+                self.tree.delete(row)
+
+            for row in data:
+                self.tree.insert("", "end", values=row)
+
+            cursor.close()
+            conn.close()
+
+        except Error as e:
+            messagebox.showerror("Error", f"Error filtering payroll data: {e}")
+
+    def clear_filter(self):
+        """ Reset the table to show all payroll data """
+        # Clear the date entry fields
+        self.start_date_entry.delete(0, tk.END)
+        self.end_date_entry.delete(0, tk.END)
+        self.fetch_payroll_data()  # Fetches and displays all payroll data
+        messagebox.showinfo("Filter Cleared", "All payroll data will now be displayed.")

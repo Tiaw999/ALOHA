@@ -246,13 +246,13 @@ class RevenueScreen(tk.Frame):
                     return
 
             # If all validations pass, update the database
-            self.update_revenue_data(item_id, row_values[0], new_values)
+            self.update_revenue_data(row_values[0], new_values)
             edit_window.destroy()
 
         save_button = ttk.Button(edit_window, text="Save", command=save_changes)
         save_button.grid(row=len(labels), columnspan=2, pady=10)
 
-    def update_revenue_data(self, item_id, record_id, new_values):
+    def update_revenue_data(self, record_id, new_values):
         try:
             conn = get_connection()
             cursor = conn.cursor()
