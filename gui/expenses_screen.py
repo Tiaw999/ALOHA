@@ -3,6 +3,8 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from datetime import datetime
 from db import get_connection
+from mysql.connector import Error
+
 
 class ExpensesScreen(tk.Frame):
     def __init__(self, master, store_name, previous_screen, selected_month=None, selected_year=None):
@@ -100,11 +102,8 @@ class ExpensesScreen(tk.Frame):
             expensetype = type_entry.get().strip()
             expensevalue = value_entry.get().strip()
 
-            if not date_str or not expensetype or not expensevalue:
-                messagebox.showwarning("Input Error", "All fields are required.")
-                return
-
             try:
+                # Try to parse the date
                 date = datetime.strptime(date_str, "%Y-%m-%d").date()
 
                 # Check if the entered date is within the selected month and year
@@ -114,21 +113,15 @@ class ExpensesScreen(tk.Frame):
                     return
 
             except ValueError:
-                messagebox.showerror("Date Error", "Invalid date format. Use YYYY-MM-DD.")
-                return
-
-            try:
-                expensevalue = float(expensevalue)
-            except ValueError:
-                messagebox.showerror("Input Error", "Expense value must be a number.")
+                # If the date is not valid, show an error message
+                messagebox.showerror("Date Error", "Invalid date format. Please use YYYY-MM-DD.")
                 return
 
             try:
                 conn = get_connection()
                 cursor = conn.cursor()
                 cursor.execute("""
-                    INSERT INTO expenses (storename, expensetype, expensevalue, date)
-                    VALUES (%s, %s, %s, %s)
+                    CALL insert_expense(%s, %s, %s, %s);
                 """, (self.store_name, expensetype, expensevalue, date))
                 conn.commit()
                 cursor.close()
@@ -139,6 +132,8 @@ class ExpensesScreen(tk.Frame):
                 add_window.destroy()
 
             except Error as e:
+                # If there's an error, show it in a messagebox
+                error_message = str(e)
                 messagebox.showerror("Error", f"Error adding expense data: {e}")
 
         save_btn = tk.Button(add_window, text="Save", command=save_entry)

@@ -1,17 +1,28 @@
 # db.py
 import mysql.connector
 
-# Central DB config
+# Central DB config — users only edit these two!
+db_user = 'root'
+db_password = 'Cooldaisy662'
+
 db_config = {
     'host': 'localhost',
-    'user': 'root',
-    'password': 'Cooldaisy662',
+    'user': db_user,
+    'password': db_password,
     'database': 'store_manager'
 }
 
 def get_connection():
-    """Return a new DB connection."""
+    """Return a new DB connection with a selected database."""
     return mysql.connector.connect(**db_config)
+
+def get_connection_without_db():
+    """Return a connection without specifying a database."""
+    return mysql.connector.connect(
+        host='localhost',
+        user=db_user,
+        password=db_password
+    )
 
 def get_stores():
     """Fetch store names from the database."""

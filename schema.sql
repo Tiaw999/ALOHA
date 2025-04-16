@@ -1,13 +1,10 @@
 -- Create Database
 CREATE DATABASE IF NOT EXISTS store_manager;
 USE store_manager;
-
 -- Create Stores Table
 CREATE TABLE IF NOT EXISTS stores (
     storename VARCHAR(50) NOT NULL PRIMARY KEY
 );
-
--- Create Staff Table
 CREATE TABLE IF NOT EXISTS staff (
     name VARCHAR(50) NOT NULL,
     storename VARCHAR(50) NOT NULL,
@@ -18,8 +15,6 @@ CREATE TABLE IF NOT EXISTS staff (
     PRIMARY KEY(name, storename),
     FOREIGN KEY(storename) REFERENCES stores(storename)
 );
-
--- Create Expenses Table
 CREATE TABLE IF NOT EXISTS expenses (
     id INT AUTO_INCREMENT PRIMARY KEY,
     storename VARCHAR(50),
@@ -97,3 +92,79 @@ CREATE TABLE IF NOT EXISTS timesheet (
     regout DECIMAL(10, 2),
     FOREIGN KEY(empname, storename) REFERENCES staff(name, storename)
 );
+
+-- Trigger for Insert: Ensures that no field is empty and the correct data types are used
+CREATE TRIGGER validate_expense_insert BEFORE INSERT ON expenses
+FOR EACH ROW
+BEGIN
+
+    -- Validate expense type: Must not be NULL or empty and must contain non-numeric characters
+    IF NEW.expensetype IS NULL OR TRIM(NEW.expensetype) = '' THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Expense type cannot be empty.';
+    END IF;
+
+    IF NEW.expensetype REGEXP '^[0-9]+$' THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Expense type must contain letters.';
+    END IF;
+
+    -- Validate expense value: Must be a positive decimal
+    IF NEW.expensevalue IS NULL OR NEW.expensevalue <= 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Expense value must be a positive number.';
+    END IF;
+
+END;
+
+
+-- Trigger for Update: Ensures that no field is empty and the correct data types are used
+CREATE TRIGGER validate_expense_update BEFORE UPDATE ON expenses
+FOR EACH ROW
+BEGIN
+
+    -- Validate expense type: Must not be NULL or empty and must contain non-numeric characters
+    IF NEW.expensetype IS NULL OR TRIM(NEW.expensetype) = '' THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Expense type cannot be empty.';
+    END IF;
+
+    IF NEW.expensetype REGEXP '^[0-9]+$' THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Expense type must contain letters.';
+    END IF;
+
+    -- Validate expense value: Must be a positive decimal
+    IF NEW.expensevalue IS NULL OR NEW.expensevalue <= 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Expense value must be a positive number.';
+    END IF;
+
+END;
+
+CREATE PROCEDURE insert_expense (
+    IN p_storename VARCHAR(50),
+    IN p_expensetype VARCHAR(50),
+    IN p_expensevalue DECIMAL(10,2),
+    IN p_date DATE
+)
+BEGIN
+    -- Call the trigger automatically (this is done by MySQL once insert occurs)
+    INSERT INTO expenses (storename, expensetype, expensevalue, date)
+    VALUES (p_storename, p_expensetype, p_expensevalue, p_date);
+END;
+
+CREATE PROCEDURE update_expense (
+    IN p_id INT,
+    IN p_expensetype VARCHAR(50),
+    IN p_expensevalue DECIMAL(10,2),
+    IN p_date DATE
+)
+BEGIN
+    -- Call the trigger automatically (this is done by MySQL once update occurs)
+    UPDATE expenses
+    SET expensetype = p_expensetype,
+        expensevalue = p_expensevalue,
+        date = p_date
+    WHERE id = p_id;
+END;
