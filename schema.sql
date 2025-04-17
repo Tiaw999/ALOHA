@@ -9,10 +9,10 @@ CREATE TABLE IF NOT EXISTS stores (
 CREATE TABLE IF NOT EXISTS staff (
     name VARCHAR(50) NOT NULL,
     storename VARCHAR(50) NOT NULL,
+    role ENUM('Owner', 'Manager', 'Employee') NOT NULL,
     hourlyrate DECIMAL(10, 2),
     bonusrate DECIMAL(10, 2),
     password VARCHAR(255) NOT NULL,
-    role ENUM('Owner', 'Manager', 'Employee') NOT NULL,
     PRIMARY KEY(name, storename),
     FOREIGN KEY(storename) REFERENCES stores(storename)
 );
