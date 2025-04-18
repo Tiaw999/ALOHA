@@ -39,15 +39,23 @@ class ManagerHome(tk.Frame):
             ("Payroll", self.go_to_payroll),
             ("Staff", self.go_to_staff),
             ("Timesheet", self.go_to_timesheet),
-            ("Withdrawals", self.go_to_withdrawals),
             ("Merchandise", self.go_to_merchandise),
             ("Invoices", self.go_to_invoices)
         ]
 
-        # Place buttons in grid with 2 columns
-        for idx, (text, command) in enumerate(buttons):
-            btn = ttk.Button(button_frame, text=text, width=20, command=command)
-            btn.grid(row=idx // 2, column=idx % 2, padx=10, pady=10)
+        for idx, (label, action) in enumerate(buttons):
+            row = idx // 2
+            col = idx % 2
+
+            # If it's the last button and there's an odd number, center it
+            if len(buttons) % 2 != 0 and idx == len(buttons) - 1:
+                colspan = 2
+                col = 0
+            else:
+                colspan = 1
+
+            button = ttk.Button(button_frame, text=label, width=20, command=action)
+            button.grid(row=row, column=col, columnspan=colspan, padx=15, pady=12, sticky="ew")
 
         # Add Back button to return to login screen (Top-Left)
         back_button = ttk.Button(self, text="<- Back", command=self.go_back)

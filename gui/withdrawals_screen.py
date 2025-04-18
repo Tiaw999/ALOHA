@@ -3,11 +3,12 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from datetime import datetime
 from db import get_connection
+from mysql.connector import Error
 
 class WithdrawalsScreen(tk.Frame):
-    def __init__(self, master, store_name, previous_screen, selected_month=None, selected_year=None):
+    def __init__(self, master, store_name, previous_screen, selected_month=None, selected_year=None, owner_name = None):
         super().__init__(master)
-        self.columns = ("ID", "Date", "Employee", "Amount", "Notes")
+        self.columns = ("ID", "Employee Name", "Date", "Amount", "Notes")
         self.master = master
         self.store_name = store_name
         self.previous_screen = previous_screen
@@ -19,7 +20,7 @@ class WithdrawalsScreen(tk.Frame):
         else:
             self.selected_month = selected_month
             self.selected_year = selected_year
-
+        self.owner_name = owner_name
         self.master.geometry("900x600")
         self.master.title("Withdrawals")
         self.create_widgets()
@@ -39,7 +40,7 @@ class WithdrawalsScreen(tk.Frame):
         withdrawals_label.grid(row=1, column=1, padx=10, pady=5)
 
         # Table (Treeview)
-        columns = ("ID", "Date", "Employee", "Amount", "Notes")
+        columns = ("ID", "Employee Name", "Date", "Amount", "Notes")
         self.tree = ttk.Treeview(self, columns=columns, show="headings")
 
         for col in columns:
@@ -59,38 +60,15 @@ class WithdrawalsScreen(tk.Frame):
         delete_button = ttk.Button(self, text="Delete Row", command=self.delete_row)
         delete_button.grid(row=gap_row, column=2, padx=10, pady=5, sticky="w")
 
-        # Adding gap below row buttons
-        gap_row += 1
-
-        # Date Filter Inputs (moved below row buttons, adjusted to be more compact horizontally)
-        tk.Label(self, text="Start Date (YYYY-MM-DD):").grid(row=gap_row, column=0, padx=1, pady=1, sticky="e")
-        self.start_date_entry = tk.Entry(self, width=12)  # Reduced width for better fitting
-        self.start_date_entry.grid(row=gap_row, column=1, padx=1, pady=2)
-
-        tk.Label(self, text="End Date (YYYY-MM-DD):").grid(row=gap_row, column=2, padx=1, pady=1, sticky="e")
-        self.end_date_entry = tk.Entry(self, width=12)  # Reduced width for better fitting
-        self.end_date_entry.grid(row=gap_row, column=3, padx=1, pady=2)
-
-        # Filter and Clear Filter Buttons (placed after the date filter inputs, more compact)
-        filter_btn = ttk.Button(self, text="Filter", command=self.filter_by_date)
-        filter_btn.grid(row=gap_row, column=4, padx=5, pady=5)
-
-        clear_filter_btn = ttk.Button(self, text="Clear Filter", command=self.clear_filter)
-        clear_filter_btn.grid(row=gap_row, column=5, padx=5, pady=5)
-
     def add_row(self):
         """ Open a pop-up window to add a new withdrawal entry """
         add_window = tk.Toplevel(self)
         add_window.title("Add Withdrawal Entry")
-        add_window.geometry("300x300")
+        add_window.geometry("300x220")
 
         tk.Label(add_window, text="Date (YYYY-MM-DD):").pack(pady=2)
         date_entry = tk.Entry(add_window)
         date_entry.pack(pady=2)
-
-        tk.Label(add_window, text="Employee Name:").pack(pady=2)
-        empname_entry = tk.Entry(add_window)
-        empname_entry.pack(pady=2)
 
         tk.Label(add_window, text="Amount:").pack(pady=2)
         amount_entry = tk.Entry(add_window)
@@ -104,13 +82,17 @@ class WithdrawalsScreen(tk.Frame):
         def save_entry():
             # Get the values entered by the user
             date_value = date_entry.get()
-            empname_value = empname_entry.get()
             amount_value = amount_entry.get()
             notes_value = notes_entry.get()
 
             # Validate date format
             try:
                 date = datetime.strptime(date_value, "%Y-%m-%d").date()
+                # Check if the entered date is within the selected month and year
+                if date.month != self.selected_month or date.year != self.selected_year:
+                    messagebox.showerror("Date Error",
+                                         f"Please enter a date within {self.selected_month}/{self.selected_year}.")
+                    return
             except ValueError:
                 messagebox.showerror("Date Error", "Invalid date format. Use YYYY-MM-DD.")
                 return
@@ -122,11 +104,6 @@ class WithdrawalsScreen(tk.Frame):
                 messagebox.showerror("Amount Error", "Amount must be a valid number.")
                 return
 
-            # Validate employee name
-            if not empname_value:
-                messagebox.showerror("Input Error", "Employee name is required.")
-                return
-
             # Save the withdrawal to the database
             try:
                 conn = get_connection()
@@ -135,7 +112,7 @@ class WithdrawalsScreen(tk.Frame):
                 cursor.execute("""
                     INSERT INTO withdrawals (storename, empname, amount, notes, date)
                     VALUES (%s, %s, %s, %s, %s)
-                """, (self.store_name, empname_value, amount, notes_value, date))
+                """, (self.store_name, self.owner_name, amount, notes_value, date))
 
                 conn.commit()
                 cursor.close()
@@ -194,4 +171,145 @@ class WithdrawalsScreen(tk.Frame):
         row_values = self.tree.item(selected_item, "values")
 
         # Open the edit dialog
-        self.open_edit_dialog(selected_item, row_values)
+        self.open_edit_dialog(row_values)
+
+    def open_edit_dialog(self, row_values):
+        edit_window = tk.Toplevel(self)
+        edit_window.title("Edit Withdrawal Entry")
+
+        labels = ["Date (YYYY-MM-DD)", "Amount", "Notes"]
+        entries = []
+
+        for i, (label_text, value) in enumerate(zip(labels, row_values[2:])):  # Skip ID (row_values[0])
+            tk.Label(edit_window, text=label_text).grid(row=i, column=0, padx=10, pady=5)
+            entry = tk.Entry(edit_window)
+
+            if label_text == "Date (YYYY-MM-DD)":
+                value = value.split(" ")[0]  # Trims time if present
+
+            entry.insert(0, value)
+            entry.grid(row=i, column=1, padx=10, pady=5)
+            entries.append(entry)
+
+        def save_changes():
+            new_values = [entry.get() for entry in entries]
+
+            # Validate date format
+            try:
+                date = datetime.strptime(new_values[0], "%Y-%m-%d").date()
+                if date.month != self.selected_month or date.year != self.selected_year:
+                    messagebox.showerror("Date Error",
+                                         f"Please enter a date within {self.selected_month}/{self.selected_year}.")
+                    return
+            except ValueError:
+                messagebox.showerror("Date Error", "Invalid date format. Use YYYY-MM-DD.")
+                return
+
+            # Validate amount
+            try:
+                float(new_values[1])  # Amount
+            except ValueError:
+                messagebox.showerror("Input Error", "Amount must be a number.")
+                return
+
+            self.update_withdrawal_data(row_values[0], new_values)
+            edit_window.destroy()
+
+        save_button = ttk.Button(edit_window, text="Save", command=save_changes)
+        save_button.grid(row=len(labels), columnspan=2, pady=10)
+
+    def update_withdrawal_data(self, record_id, new_values):
+        try:
+            conn = get_connection()
+            cursor = conn.cursor()
+
+            cursor.execute("""
+                UPDATE withdrawals
+                SET date = %s, amount = %s, notes = %s
+                WHERE id = %s
+            """, (*new_values, record_id))
+
+            conn.commit()
+            cursor.close()
+            conn.close()
+
+            messagebox.showinfo("Success", "Withdrawal record updated successfully!")
+            self.fetch_withdrawal_data()  # Refresh table
+
+        except Error as e:
+            messagebox.showerror("Error", f"Error updating withdrawal data: {e}")
+
+    def get_selected_month_year(self):
+        return self.selected_month, self.selected_year
+
+    def get_owner_name(self):
+        return self.owner_name
+
+    def go_back(self):
+        self.master.switch_screen(self.previous_screen.__class__, self.store_name)
+
+    def fetch_withdrawal_data(self):
+        try:
+            conn = get_connection()
+            cursor = conn.cursor()
+
+            # Debug print to verify selected_month and selected_year
+            print(f"Fetching data for Month: {self.selected_month}, Year: {self.selected_year}")
+
+            # Query to fetch withdrawals for the current store and selected month/year
+            query = """
+                SELECT id, empname, date, amount, notes
+                FROM withdrawals
+                WHERE storename = %s
+                AND MONTH(date) = %s AND YEAR(date) = %s
+                ORDER BY date DESC
+            """
+            query_params = [self.store_name, self.selected_month, self.selected_year]
+
+            cursor.execute(query, tuple(query_params))
+            data = cursor.fetchall()
+
+            print(f"Fetched Data: {data}")
+
+            if not data:
+                print("No withdrawal data found for the given month/year.")
+
+            # Clear existing entries in the tree
+            for row in self.tree.get_children():
+                self.tree.delete(row)
+
+            # Insert the new data
+            for row in data:
+                self.tree.insert("", "end", values=row)
+
+            self.resize_columns()
+
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            print(f"Error fetching withdrawal data: {e}")
+
+    def resize_columns(self):
+        min_width = 80  # Minimum width for each column to ensure header is visible
+
+        for i, col in enumerate(self.columns):
+            # Start with the length of the column header
+            max_length = len(col)
+
+            # Calculate the max content length for each column
+            for item in self.tree.get_children():
+                value = self.tree.item(item)["values"][i]
+                max_length = max(max_length, len(str(value)))
+
+            # Adjust the column width dynamically based on content length, adding extra space for padding
+            self.tree.column(col, width=max(min_width, max_length * 10))
+
+            # Optionally, make sure the header fits as well
+            header = self.tree.heading(col)["text"]
+            header_length = len(header)
+            self.tree.column(col, width=max(self.tree.column(col)["width"], header_length * 10))
+
+
+
+
+
