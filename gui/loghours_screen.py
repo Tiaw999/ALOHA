@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import ttk
 from datetime import datetime
+from db import get_connection
+import mysql.connector
 ##push changes
 class LogHours(tk.Frame):
     def __init__(self, root, store_name, previous_screen):
@@ -10,94 +12,35 @@ class LogHours(tk.Frame):
         self.previous_screen = previous_screen
         self.root.geometry("900x600")
         self.root.title("Log Hours")
-
-        self.entries = []
+        self.pack(fill=tk.BOTH, expand=True)
 
         # Title label
-        label = tk.Label(self, text="Employee Hours", font=("Arial", 16))
-        label.pack(pady=10)
+        tk.Label(self, text="Employee Hours", font=("Arial", 16)).pack(pady=10)
 
         # Back button at the top-left
         back_button = tk.Button(self, text="← Back", command=self.go_back)
         back_button.pack(anchor="nw", padx=10, pady=5)
 
-        # Treeview to show logged hours
-        self.tree = ttk.Treeview(self, columns=("name", "start", "end", "hours"), show="headings", selectmode="browse")
-        self.tree.heading("name", text="Employee Name")
-        self.tree.heading("start", text="Start Time")
-        self.tree.heading("end", text="End Time")
-        self.tree.heading("hours", text="Hours Worked")
-        self.tree.column("name", width=150)
-        self.tree.column("start", width=150)
-        self.tree.column("end", width=150)
-        self.tree.column("hours", width=100)
-        self.tree.pack(pady=10)
-
         # Frame for input fields
         entry_frame = tk.Frame(self)
-        entry_frame.pack(pady=10)
+        entry_frame.pack(pady=20)
 
-        # Entry for employee name
-        tk.Label(entry_frame, text="Name:").grid(row=0, column=0, padx=5)
+        tk.Label(entry_frame, text="Employee Name:").grid(row=0, column=0, padx=5)
         self.name_entry = tk.Entry(entry_frame)
         self.name_entry.grid(row=0, column=1, padx=5)
 
-        # Entry for start time
-        tk.Label(entry_frame, text="Start Time (HH:MM):").grid(row=0, column=2, padx=5)
+        tk.Label(entry_frame, text="Start Time (HH:MM):").grid(row=1, column=0, padx=5)
         self.start_entry = tk.Entry(entry_frame)
-        self.start_entry.grid(row=0, column=3, padx=5)
+        self.start_entry.grid(row=1, column=1, padx=5)
 
-        # Entry for end time
-        tk.Label(entry_frame, text="End Time (HH:MM):").grid(row=0, column=4, padx=5)
+        tk.Label(entry_frame, text="End Time (HH:MM):").grid(row=2, column=0, padx=5)
         self.end_entry = tk.Entry(entry_frame)
-        self.end_entry.grid(row=0, column=5, padx=5)
+        self.end_entry.grid(row=2, column=1, padx=5)
 
-        # Buttons
-        button_frame = tk.Frame(self)
-        button_frame.pack(pady=10)
-
-        add_btn = tk.Button(button_frame, text="Add", command=self.add_entry)
-        add_btn.grid(row=0, column=0, padx=5)
-
-        edit_btn = tk.Button(button_frame, text="Edit", command=self.edit_entry)
-        edit_btn.grid(row=0, column=1, padx=5)
-
-        delete_btn = tk.Button(button_frame, text="Delete", command=self.delete_entry)
-        delete_btn.grid(row=0, column=2, padx=5)
+        add_btn = tk.Button(self, text="Submit Hours", bg="#28a745", fg="white", command=self.add_entry)
+        add_btn.pack(pady=20)
 
     def add_entry(self):
-        name = self.name_entry.get().strip()
-        start_time = self.start_entry.get().strip()
-        end_time = self.end_entry.get().strip()
-
-        if not name or not start_time or not end_time:
-            messagebox.showerror("Input Error", "All fields (name, start time, end time) are required.")
-            return
-
-        try:
-            start_dt = datetime.strptime(start_time, "%H:%M")
-            end_dt = datetime.strptime(end_time, "%H:%M")
-            if end_dt < start_dt:
-                end_dt = end_dt.replace(day=start_dt.day + 1)  # assume shift goes past midnight
-            duration = (end_dt - start_dt).total_seconds() / 3600
-            hours_worked = round(duration, 2)
-        except ValueError:
-            messagebox.showerror("Format Error", "Time format must be HH:MM (24-hour).")
-            return
-
-        self.entries.append((name, start_time, end_time, hours_worked))
-        self.tree.insert("", "end", values=(name, start_time, end_time, hours_worked))
-
-        self.name_entry.delete(0, tk.END)
-        self.start_entry.delete(0, tk.END)
-        self.end_entry.delete(0, tk.END)
-
-    def edit_entry(self):
-        selected = self.tree.selection()
-        if not selected:
-            messagebox.showerror("Selection Error", "Please select an entry to edit.")
-            return
-
         name = self.name_entry.get().strip()
         start_time = self.start_entry.get().strip()
         end_time = self.end_entry.get().strip()
@@ -107,37 +50,57 @@ class LogHours(tk.Frame):
             return
 
         try:
-            start_dt = datetime.strptime(start_time, "%H:%M")
-            end_dt = datetime.strptime(end_time, "%H:%M")
-            if end_dt < start_dt:
-                end_dt = end_dt.replace(day=start_dt.day + 1)
-            duration = (end_dt - start_dt).total_seconds() / 3600
-            hours_worked = round(duration, 2)
+            now = datetime.now()
+            clock_in = datetime.strptime(start_time, "%H:%M").replace(year=now.year, month=now.month, day=now.day)
+            clock_out = datetime.strptime(end_time, "%H:%M").replace(year=now.year, month=now.month, day=now.day)
+            if clock_out < clock_in:
+                clock_out = clock_out.replace(day=clock_out.day + 1)
+
+            regin = float(clock_in.strftime('%H.%M'))
+            regout = float(clock_out.strftime('%H.%M'))
         except ValueError:
             messagebox.showerror("Format Error", "Time format must be HH:MM (24-hour).")
             return
 
-        index = self.tree.index(selected[0])
-        self.entries[index] = (name, start_time, end_time, hours_worked)
-        self.tree.item(selected[0], values=(name, start_time, end_time, hours_worked))
+        try:
+            connection = mysql.connector.connect(
+                host='localhost',
+                user= 'root',
+                password='rootroot',
+                database='store_manager'
+            )
+            cursor = connection.cursor()
 
-        self.name_entry.delete(0, tk.END)
-        self.start_entry.delete(0, tk.END)
-        self.end_entry.delete(0, tk.END)
+            # Check if employee exists first
+            cursor.execute(
+                "SELECT 1 FROM staff WHERE name = %s AND storename = %s",
+                (name, self.store_name)
+            )
+            if not cursor.fetchone():
+                messagebox.showerror(
+                    "Input Error",
+                    f"Employee '{name}' is not registered under store '{self.store_name}'."
+                )
+                connection.close()
+                return
 
-    def delete_entry(self):
-        selected = self.tree.selection()
-        if not selected:
-            messagebox.showerror("Selection Error", "Please select an entry to delete.")
-            return
+            query = """
+                INSERT INTO timesheet (storename, empname, clock_in, clock_out, regin, regout)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """
+            cursor.execute(query, (self.store_name, name, clock_in, clock_out, regin, regout))
+            connection.commit()
+            cursor.close()
+            connection.close()
 
-        index = self.tree.index(selected[0])
-        del self.entries[index]
-        self.tree.delete(selected[0])
+            messagebox.showinfo("Success", "Hours logged successfully!")
 
-        self.name_entry.delete(0, tk.END)
-        self.start_entry.delete(0, tk.END)
-        self.end_entry.delete(0, tk.END)
+            self.name_entry.delete(0, tk.END)
+            self.start_entry.delete(0, tk.END)
+            self.end_entry.delete(0, tk.END)
+
+        except mysql.connector.Error as err:
+            messagebox.showerror("Database Error", f"Error: {err}")
 
     def go_back(self):
         self.master.switch_screen(self.previous_screen.__class__, self.store_name)
