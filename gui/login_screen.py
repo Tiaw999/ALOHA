@@ -9,8 +9,6 @@ from gui.owner_home import OwnerHome
 from gui.manager_home import ManagerHome
 from gui.employee_home import EmployeeHome
 
-
-
 class LoginScreen(tk.Frame):
     def __init__(self, master, previous_screen):
         super().__init__(master)
@@ -65,3 +63,7 @@ class LoginScreen(tk.Frame):
                 self.master.switch_screen(EmployeeHome, store)
         else:
             messagebox.showerror("Login Failed", "Invalid credentials. Please try again.")
+
+    def get_owner_name(self):
+        return self.user_entry.get()
+

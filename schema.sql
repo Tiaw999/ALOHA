@@ -5,16 +5,18 @@ USE store_manager;
 CREATE TABLE IF NOT EXISTS stores (
     storename VARCHAR(50) NOT NULL PRIMARY KEY
 );
+
 CREATE TABLE IF NOT EXISTS staff (
     name VARCHAR(50) NOT NULL,
     storename VARCHAR(50) NOT NULL,
+    role ENUM('Owner', 'Manager', 'Employee') NOT NULL,
     hourlyrate DECIMAL(10, 2),
     bonusrate DECIMAL(10, 2),
     password VARCHAR(255) NOT NULL,
-    role ENUM('Owner', 'Manager', 'Employee') NOT NULL,
     PRIMARY KEY(name, storename),
     FOREIGN KEY(storename) REFERENCES stores(storename)
 );
+
 CREATE TABLE IF NOT EXISTS expenses (
     id INT AUTO_INCREMENT PRIMARY KEY,
     storename VARCHAR(50),
@@ -156,9 +158,9 @@ END;
 
 CREATE PROCEDURE update_expense (
     IN p_id INT,
+    IN p_date DATE,
     IN p_expensetype VARCHAR(50),
-    IN p_expensevalue DECIMAL(10,2),
-    IN p_date DATE
+    IN p_expensevalue DECIMAL(10,2)
 )
 BEGIN
     -- Call the trigger automatically (this is done by MySQL once update occurs)

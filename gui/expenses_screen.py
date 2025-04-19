@@ -128,12 +128,10 @@ class ExpensesScreen(tk.Frame):
                 conn.close()
 
                 messagebox.showinfo("Success", "New expense record added successfully!")
-                self.fetch_expense_data()  # Refresh table
                 add_window.destroy()
-
+                self.fetch_expense_data()  # Refresh table
             except Error as e:
                 # If there's an error, show it in a messagebox
-                error_message = str(e)
                 messagebox.showerror("Error", f"Error adding expense data: {e}")
 
         save_btn = tk.Button(add_window, text="Save", command=save_entry)
@@ -163,12 +161,11 @@ class ExpensesScreen(tk.Frame):
                 cursor.execute("DELETE FROM expenses WHERE id = %s", (row_id,))
                 conn.commit()
 
-                self.tree.delete(selected_item)  # Remove row from Treeview
-
                 cursor.close()
                 conn.close()
 
                 messagebox.showinfo("Success", "Expense record deleted successfully!")
+                self.fetch_expense_data()  # Refresh table
             except Error as e:
                 messagebox.showerror("Error", f"Failed to delete expense record: {e}")
 
@@ -224,41 +221,28 @@ class ExpensesScreen(tk.Frame):
                 messagebox.showerror("Date Error", "Invalid date format. Use YYYY-MM-DD.")
                 return
 
-            # === Validate Decimal Fields ===
-            try:
-                float(new_values[2])  # Validate Expense Value
-            except ValueError:
-                messagebox.showerror("Input Error", "Expense Value must be a number.")
-                return
-
             # If all validations pass, update the database
-            self.update_expense_data(item_id, row_values[0], new_values)
-            edit_window.destroy()
+            self.update_expense_data(row_values[0], new_values, edit_window)
 
         save_button = ttk.Button(edit_window, text="Save", command=save_changes)
         save_button.grid(row=len(labels), columnspan=2, pady=10)
 
-    def update_expense_data(self, item_id, record_id, new_values):
+    def update_expense_data(self, record_id, new_values, edit_window):
         try:
             conn = get_connection()
             cursor = conn.cursor()
 
             cursor.execute("""
-                UPDATE expenses
-                SET date = %s, expensetype = %s, expensevalue = %s
-                WHERE id = %s
-            """, (*new_values, record_id))
+                CALL update_expense(%s, %s, %s, %s)
+            """, (record_id, *new_values))
 
             conn.commit()
-
-            # Update Treeview display
-            self.tree.item(item_id, values=(record_id, *new_values))
-
             cursor.close()
             conn.close()
 
             messagebox.showinfo("Success", "Expense record updated successfully!")
-
+            edit_window.destroy()
+            self.fetch_expense_data()  # Refresh table
         except Error as e:
             messagebox.showerror("Error", f"Error updating expense data: {e}")
 

@@ -15,7 +15,7 @@ from gui.invoice_screen import InvoiceScreen
 
 
 class OwnerHome(tk.Frame):
-    def __init__(self, master, store_name, previous_screen, selected_month=None, selected_year=None):
+    def __init__(self, master, store_name, previous_screen, selected_month=None, selected_year=None, owner_name=None):
         super().__init__(master)
         self.master = master
         self.store_name = store_name
@@ -26,6 +26,7 @@ class OwnerHome(tk.Frame):
         else:
             self.selected_month = selected_month
             self.selected_year = selected_year
+        self.owner_name = owner_name
         self.previous_screen = previous_screen
         self.master.title("Owner Home")
         self.master.geometry("900x600")
@@ -160,3 +161,6 @@ class OwnerHome(tk.Frame):
         from gui.login_screen import LoginScreen
         # Call master.switch_screen with None to go back to the login screen
         self.master.switch_screen(LoginScreen)
+
+    def get_owner_name(self):
+        return self.owner_name

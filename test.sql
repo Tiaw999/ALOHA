@@ -1,3 +1,3 @@
-Use store_manager
+Use store_manager;
 
 Drop database store_manager
