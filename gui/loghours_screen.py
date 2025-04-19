@@ -3,7 +3,7 @@ from tkinter import ttk
 from datetime import datetime
 from db import get_connection
 import mysql.connector
-##push changes
+##push change
 class LogHours(tk.Frame):
     def __init__(self, root, store_name, previous_screen):
         super().__init__(root)
