@@ -215,15 +215,20 @@ class InvoiceScreen(tk.Frame):
         ]
         entries = []
 
+        print(
+            f"Row values: {row_values[1:]}")  # This should print the actual row values excluding the Invoice # (first value)
         # Skip the first value (Invoice #), use rest for editable fields
         for i, (label_text, value) in enumerate(zip(labels, row_values[1:])):
+            # Debugging: Print out values before inserting into the entry fields
             tk.Label(edit_window, text=label_text).grid(row=i, column=0, padx=10, pady=5)
             entry = tk.Entry(edit_window)
-
-            if i in [0, 3, 5] and value:  # Handle any date fields
-                value = value.split(" ")[0]
-
-            entry.insert(0, value)
+            # If the value is None, leave the entry empty, otherwise insert the value
+            if value == "None":
+                entry.insert(0, "")  # Leave it empty if the value is None
+            else:
+                if i in [0, 3, 5] and value:  # Handle any date fields
+                    value = value.split(" ")[0]  # Strip time if present in date fields
+                entry.insert(0, value)  # Insert the value into the entry field
             entry.grid(row=i, column=1, padx=10, pady=5)
             entries.append(entry)
 
