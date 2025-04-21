@@ -23,7 +23,7 @@ This project is a store management application designed to help store owners log
 - **SQL Assertions:** 
   - SQL assertions are used to ensure that only valid operations are performed in the database, preventing invalid data from being saved.
 - **SQL Procedures and Triggers:** 
-  - Procedures and triggers are used to efficiently handle data tasks like updating totals or performing specific actions when certain events occur, such as closing the store or recording a sale.
+  - Procedures and triggers are used to efficiently handle data tasks like inputting and updating Expenses
 
 ### 4. **Graphical User Interface (GUI)**
 - **User-Friendly Navigation:** 
@@ -31,7 +31,7 @@ This project is a store management application designed to help store owners log
 - **Consistent Layout:** 
   - All screens maintain a consistent layout with clean design, aligned components, and user-friendly interfaces that make operations straightforward.
 - **Interactive Forms:** 
-  - The forms within the GUI allow users to enter data with simple text inputs, checkboxes, and dropdowns.
+  - The forms within the GUI allow users to enter data with simple text inputs and dropdowns.
 
 ### 5. **Error Handling & Validation**
 - **Input Validation:** 
@@ -64,9 +64,10 @@ To get started with the ALOHA, follow the steps below.
 
 ### Running the Application
 
-1. Make sure you have a MySQL database set up (or any other SQL database you plan to use) and configure the necessary credentials in the application.
+1. Configure your credentials in db.py
+2. Set up the database by running set_up.py
 
-2. Run the main script to start the application:
+3. Run the main script to start the application:
     ```bash
     python main.py
     ```
