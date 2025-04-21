@@ -193,9 +193,9 @@ class RevenueScreen(tk.Frame):
         row_values = self.tree.item(selected_item, "values")
 
         # Open the edit dialog
-        self.open_edit_dialog(selected_item, row_values)
+        self.open_edit_dialog(row_values)
 
-    def open_edit_dialog(self, item_id, row_values):
+    def open_edit_dialog(self, row_values):
         edit_window = tk.Toplevel(self)
         edit_window.title("Edit Revenue Entry")
 

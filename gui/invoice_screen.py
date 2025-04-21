@@ -3,7 +3,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from datetime import datetime
 from db import get_connection
-from decimal import Decimal
+from mysql.connector import Error
 
 class InvoiceScreen(tk.Frame):
     def __init__(self, master, store_name, previous_screen, selected_month=None, selected_year=None, owner_name=None):
@@ -50,10 +50,10 @@ class InvoiceScreen(tk.Frame):
 
         # Filter row
         filter_row = btn_row + 1
-        tk.Label(self, text="Start Date (YYYY-MM-DD):").grid(row=filter_row, column=0, sticky="e")
+        tk.Label(self, text="Start Date Received (YYYY-MM-DD):").grid(row=filter_row, column=0, sticky="e")
         self.start_date_entry = tk.Entry(self, width=12)
         self.start_date_entry.grid(row=filter_row, column=1)
-        tk.Label(self, text="End Date (YYYY-MM-DD):").grid(row=filter_row, column=2, sticky="e")
+        tk.Label(self, text="End Date Received (YYYY-MM-DD):").grid(row=filter_row, column=2, sticky="e")
         self.end_date_entry = tk.Entry(self, width=12)
         self.end_date_entry.grid(row=filter_row, column=3)
 
@@ -113,7 +113,11 @@ class InvoiceScreen(tk.Frame):
             due_date = due_date_entry.get().strip()
             paid = paid_entry.get().strip().lower()
             date_paid = date_paid_entry.get().strip()
-            paid_with = paid_with_entry.get().strip().upper()
+            paid_with = paid_with_entry.get().strip()
+            if paid_with == "":
+                paid_with = None
+            else:
+                paid_with = paid_with.upper()
 
             if not all([invoicenum, date_received, company, amount, due_date, paid]):
                 messagebox.showwarning("Input Error", "Please fill in all required fields.")
@@ -137,10 +141,6 @@ class InvoiceScreen(tk.Frame):
 
             if paid not in ["true", "false"]:
                 messagebox.showerror("Input Error", "Paid must be True or False.")
-                return
-
-            if paid_with not in ["CREDIT", "CASH"]:
-                messagebox.showerror("Input Error", "Paid With must be 'CREDIT' or 'CASH'.")
                 return
 
             try:
@@ -193,56 +193,109 @@ class InvoiceScreen(tk.Frame):
             messagebox.showerror("Error", f"Error deleting invoice: {e}")
 
     def edit_row(self):
-        sel = self.tree.selection()
-        if not sel:
-            messagebox.showwarning("Select Error", "Please select a row.")
+        selected_item = self.tree.selection()
+
+        if not selected_item:
+            messagebox.showwarning("Selection Error", "Please select a row to edit.")
             return
-        row = self.tree.item(sel, "values")
-        inv_num = row[0]
-        # Pre-fill via fetch
-        win = tk.Toplevel(self)
-        win.title("Edit Invoice")
-        win.geometry("350x350")
-        fields = ["Invoice #", "Date Received", "Company", "Amount", "Due Date", "Paid (True/False)", "Date Paid", "Paid With (CREDIT/CASH)"]
-        entries = {}
-        for i, label in enumerate(fields):
-            tk.Label(win, text=label).grid(row=i, column=0, padx=10, pady=5, sticky="e")
-            ent = tk.Entry(win)
-            ent.grid(row=i, column=1, padx=10, pady=5)
-            ent.insert(0, row[i])
-            if label == "Invoice #": ent.config(state="readonly")
-            entries[label] = ent
 
-        def save():
-            vals = {f: e.get().strip() for f,e in entries.items()}
-            # same validation as add_row...
-            # Update
+        # Get the current values of the selected row
+        row_values = self.tree.item(selected_item, "values")
+
+        # Open the edit dialog
+        self.open_edit_dialog(row_values)
+
+    def open_edit_dialog(self, row_values):
+        edit_window = tk.Toplevel(self)
+        edit_window.title("Edit Invoice Entry")
+
+        labels = [
+            "Date Received (YYYY-MM-DD)", "Company", "Amount", "Due Date (YYYY-MM-DD)",
+            "Paid (True=1/False=0)", "Date Paid (YYYY-MM-DD)", "Paid With (CASH/CREDIT)"
+        ]
+        entries = []
+
+        # Skip the first value (Invoice #), use rest for editable fields
+        for i, (label_text, value) in enumerate(zip(labels, row_values[1:])):
+            tk.Label(edit_window, text=label_text).grid(row=i, column=0, padx=10, pady=5)
+            entry = tk.Entry(edit_window)
+
+            if i in [0, 3, 5] and value:  # Handle any date fields
+                value = value.split(" ")[0]
+
+            entry.insert(0, value)
+            entry.grid(row=i, column=1, padx=10, pady=5)
+            entries.append(entry)
+
+        def save_changes():
+            new_values = [entry.get().strip() for entry in entries]
+
+            # === Validate required fields ===
+            if not all(new_values[:5]):
+                messagebox.showerror("Input Error", "All fields except Date Paid and Paid With are required.")
+                return
+
+            # === Validate date_received and due_date ===
+            for i in [0, 3]:  # Required date fields
+                try:
+                    datetime.strptime(new_values[i], "%Y-%m-%d")
+                except ValueError:
+                    messagebox.showerror("Date Error", f"{labels[i]} must be in YYYY-MM-DD format.")
+                    return
+
+            # === Validate optional date_paid ===
+            if new_values[5]:  # If it's not empty
+                try:
+                    datetime.strptime(new_values[5], "%Y-%m-%d")
+                except ValueError:
+                    messagebox.showerror("Date Error", f"{labels[5]} must be in YYYY-MM-DD format.")
+                    return
+            else:
+                new_values[5] = None
+
+            # === Validate amount ===
             try:
-                conn = get_connection()
-                cur = conn.cursor()
-                cur.execute(
-                    "UPDATE invoices SET datereceived=%s, company=%s, amount=%s, duedate=%s, paid=%s, datepaid=%s, paidwith=%s"
-                    " WHERE invoicenum=%s",
-                    (datetime.strptime(vals["Date Received"], "%Y-%m-%d").date(),
-                     vals["Company"], float(vals["Amount"]),
-                     datetime.strptime(vals["Due Date"], "%Y-%m-%d").date() if vals["Due Date"] else None,
-                     vals["Paid (True/False)"].lower() in ("true","1","yes"),
-                     datetime.strptime(vals["Date Paid"], "%Y-%m-%d").date() if vals["Date Paid"] else None,
-                     vals["Paid With (CREDIT/CASH)"].upper(),
-                     vals["Invoice #"]
-                    )
-                )
-                conn.commit()
-                cur.close()
-                conn.close()
-                messagebox.showinfo("Success", "Invoice updated.")
-                self.fetch_invoice_data()
-                win.destroy()
-            except Exception as e:
-                messagebox.showerror("Error", f"Error updating invoice: {e}")
+                float(new_values[2])
+            except ValueError:
+                messagebox.showerror("Input Error", "Amount must be a valid number.")
+                return
 
-        ttk.Button(win, text="Save", command=save).grid(row=len(fields), columnspan=2, pady=10)
-        win.grab_set()
+            # === Validate Paid field ===
+            if new_values[4].lower() not in ["true", "false"]:
+                messagebox.showerror("Input Error", "Paid must be True or False.")
+                return
+
+            # === Handle Paid With ===
+            new_values[6] = new_values[6].upper() if new_values[6] else None
+
+            # If all validations pass, update the database
+            self.update_invoice_data(row_values[0], new_values)
+            edit_window.destroy()
+
+        save_button = ttk.Button(edit_window, text="Save", command=save_changes)
+        save_button.grid(row=len(labels), columnspan=2, pady=10)
+
+    def update_invoice_data(self, invoicenum, new_values):
+        try:
+            conn = get_connection()
+            cursor = conn.cursor()
+
+            cursor.execute("""
+                UPDATE invoices
+                SET datereceived = %s, company = %s, amount = %s, duedate = %s,
+                    paid = %s, datepaid = %s, paidwith = %s
+                WHERE invoicenum = %s
+            """, (*new_values, invoicenum))
+
+            conn.commit()
+            cursor.close()
+            conn.close()
+
+            messagebox.showinfo("Success", "Invoice record updated successfully!")
+            self.fetch_invoice_data()  # Refresh table
+
+        except Error as e:
+            messagebox.showerror("Error", f"Error updating invoice data: {e}")
 
     def fetch_invoice_data(self):
         try:
@@ -254,7 +307,7 @@ class InvoiceScreen(tk.Frame):
                 "OR (MONTH(datereceived) = %s AND YEAR(datereceived) = %s)) "
                 "ORDER BY CASE WHEN paid = FALSE THEN duedate ELSE NULL END ASC, "
                 "CASE WHEN paid = TRUE THEN duedate ELSE NULL END DESC",
-                (self.store_name, self.selected_month, self.selected_year)
+                (self.store_name, self.selected_month, self.selected_year, self.selected_month, self.selected_year)
             )
             data = cur.fetchall()
             cur.close()
