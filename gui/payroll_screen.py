@@ -35,9 +35,6 @@ class PayrollScreen(tk.Frame):
         back_button = ttk.Button(self, text="<- Back", command=self.go_back)
         back_button.grid(row=1, column=0, padx=10, pady=5, sticky="w")
 
-        # Payroll Label/Button (for visual consistency)
-        payroll_label = ttk.Label(self, text="Payroll Information", font=("Arial", 14))
-        payroll_label.grid(row=1, column=1, padx=10, pady=5)
 
         # Table (Treeview)
         self.columns = ("ID", "Employee Name", "Store", "Regular Pay", "Bonus", "Pay Date")

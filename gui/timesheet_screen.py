@@ -27,16 +27,13 @@ class TimesheetScreen(tk.Frame):
 
     def create_widgets(self):
         # Store Name Label
-        store_label = ttk.Label(self, text=f"Timesheet - {self.store_name}", font=("Arial", 18, "bold"))
+        store_label = ttk.Label(self, text=f"Timesheets - {self.store_name}", font=("Arial", 18, "bold"))
         store_label.grid(row=0, column=0, columnspan=3, pady=10)
 
         # Back Button
         back_button = ttk.Button(self, text="<- Back", command=self.go_back)
         back_button.grid(row=1, column=0, padx=10, pady=5, sticky="w")
 
-        # Timesheet Label
-        timesheet_label = ttk.Label(self, text="Employee Timesheets", font=("Arial", 14))
-        timesheet_label.grid(row=1, column=1, padx=10, pady=5)
 
         # Table (Treeview)
         self.columns = ("ID", "Employee Name", "Clock In", "Clock Out", "Register In", "Register Out")

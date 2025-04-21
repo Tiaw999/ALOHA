@@ -32,9 +32,6 @@ class RevenueScreen(tk.Frame):
         back_button = ttk.Button(self, text="<- Back", command=self.go_back)
         back_button.grid(row=1, column=0, padx=10, pady=5, sticky="w")
 
-        # Revenue Label/Button (for visual consistency)
-        revenue_label = ttk.Label(self, text="Revenue", font=("Arial", 14))
-        revenue_label.grid(row=1, column=1, padx=10, pady=5)
 
         # Table (Treeview)
         columns = ("ID", "Date", "Reg", "Credit", "Cash in Envelope")

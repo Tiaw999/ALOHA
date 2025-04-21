@@ -63,12 +63,7 @@ class LogHours(tk.Frame):
             return
 
         try:
-            connection = mysql.connector.connect(
-                host='localhost',
-                user= 'root',
-                password='rootroot',
-                database='store_manager'
-            )
+            connection = get_connection()
             cursor = connection.cursor()
 
             # Check if employee exists first

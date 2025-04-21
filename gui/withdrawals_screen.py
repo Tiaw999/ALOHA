@@ -35,10 +35,6 @@ class WithdrawalsScreen(tk.Frame):
         back_button = ttk.Button(self, text="<- Back", command=self.go_back)
         back_button.grid(row=1, column=0, padx=10, pady=5, sticky="w")
 
-        # Withdrawals Label/Button (for visual consistency)
-        withdrawals_label = ttk.Label(self, text="Withdrawals", font=("Arial", 14))
-        withdrawals_label.grid(row=1, column=1, padx=10, pady=5)
-
         # Table (Treeview)
         columns = ("ID", "Employee Name", "Date", "Amount", "Notes")
         self.tree = ttk.Treeview(self, columns=columns, show="headings")

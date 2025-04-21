@@ -34,10 +34,6 @@ class StaffScreen(tk.Frame):
         back_button = ttk.Button(self, text="<- Back", command=self.go_back)
         back_button.grid(row=1, column=0, padx=10, pady=5, sticky="w")
 
-        # Staff Label for visual consistency
-        staff_label = ttk.Label(self, text="Staff List", font=("Arial", 14))
-        staff_label.grid(row=1, column=1, padx=10, pady=5)
-
         # Treeview Table for Staff
         self.columns = ("Name", "Role", "Hourly Rate", "Bonus Rate")
         self.tree = ttk.Treeview(self, columns=self.columns, show="headings")

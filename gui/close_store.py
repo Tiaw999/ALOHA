@@ -4,6 +4,9 @@ import tkinter as tk
 from tkinter import messagebox
 import mysql.connector
 
+from db import get_connection
+
+
 class CloseStore(tk.Frame):
     def __init__(self, root, store_name, previous_screen):
         super().__init__(root)
@@ -57,12 +60,7 @@ class CloseStore(tk.Frame):
             return
 
         try:
-            connection = mysql.connector.connect(
-                host='localhost',
-                user='root',
-                password='rootroot',
-                database='store_manager'
-            )
+            connection = get_connection()
             cursor = connection.cursor()
 
             # Insert into revenue table
