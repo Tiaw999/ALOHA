@@ -1,9 +1,9 @@
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import messagebox
 from datetime import datetime
 from db import get_connection
 import mysql.connector
-##push change
+
 class LogHours(tk.Frame):
     def __init__(self, root, store_name, previous_screen):
         super().__init__(root)
@@ -14,38 +14,36 @@ class LogHours(tk.Frame):
         self.root.title("Log Hours")
         self.pack(fill=tk.BOTH, expand=True)
 
-        # Title label
+        # Title
         tk.Label(self, text="Employee Hours", font=("Arial", 16)).pack(pady=10)
-
-        # Back button at the top-left
         back_button = tk.Button(self, text="← Back", command=self.go_back)
         back_button.pack(anchor="nw", padx=10, pady=5)
 
-        # Frame for input fields
+        # Input Frame
         entry_frame = tk.Frame(self)
         entry_frame.pack(pady=20)
 
-        tk.Label(entry_frame, text="Employee Name:").grid(row=0, column=0, padx=5)
-        self.name_entry = tk.Entry(entry_frame)
-        self.name_entry.grid(row=0, column=1, padx=5)
+        labels = ["Employee Name:", "Start Time (HH:MM):", "End Time (HH:MM):",
+                  "Register In Balance:", "Register Out Balance:"]
+        self.entries = {}
 
-        tk.Label(entry_frame, text="Start Time (HH:MM):").grid(row=1, column=0, padx=5)
-        self.start_entry = tk.Entry(entry_frame)
-        self.start_entry.grid(row=1, column=1, padx=5)
+        for i, label_text in enumerate(labels):
+            tk.Label(entry_frame, text=label_text).grid(row=i, column=0, padx=5, pady=5, sticky="e")
+            entry = tk.Entry(entry_frame)
+            entry.grid(row=i, column=1, padx=5, pady=5)
+            self.entries[label_text] = entry
 
-        tk.Label(entry_frame, text="End Time (HH:MM):").grid(row=2, column=0, padx=5)
-        self.end_entry = tk.Entry(entry_frame)
-        self.end_entry.grid(row=2, column=1, padx=5)
-
-        add_btn = tk.Button(self, text="Submit Hours", bg="#28a745", fg="white", command=self.add_entry)
-        add_btn.pack(pady=20)
+        submit_btn = tk.Button(self, text="Submit Hours", bg="#28a745", fg="white", command=self.add_entry)
+        submit_btn.pack(pady=20)
 
     def add_entry(self):
-        name = self.name_entry.get().strip()
-        start_time = self.start_entry.get().strip()
-        end_time = self.end_entry.get().strip()
+        name = self.entries["Employee Name:"].get().strip()
+        start_time = self.entries["Start Time (HH:MM):"].get().strip()
+        end_time = self.entries["End Time (HH:MM):"].get().strip()
+        regin = self.entries["Register In Balance:"].get().strip()
+        regout = self.entries["Register Out Balance:"].get().strip()
 
-        if not name or not start_time or not end_time:
+        if not all([name, start_time, end_time, regin, regout]):
             messagebox.showerror("Input Error", "All fields are required.")
             return
 
@@ -56,43 +54,37 @@ class LogHours(tk.Frame):
             if clock_out < clock_in:
                 clock_out = clock_out.replace(day=clock_out.day + 1)
 
-            regin = float(clock_in.strftime('%H.%M'))
-            regout = float(clock_out.strftime('%H.%M'))
+            regin_val = float(regin)
+            regout_val = float(regout)
         except ValueError:
-            messagebox.showerror("Format Error", "Time format must be HH:MM (24-hour).")
+            messagebox.showerror("Format Error", "Check that time is HH:MM and balances are numbers.")
             return
 
         try:
             connection = get_connection()
             cursor = connection.cursor()
 
-            # Check if employee exists first
-            cursor.execute(
-                "SELECT 1 FROM staff WHERE name = %s AND storename = %s",
-                (name, self.store_name)
-            )
+            cursor.execute("SELECT 1 FROM staff WHERE name = %s AND storename = %s", (name, self.store_name))
             if not cursor.fetchone():
-                messagebox.showerror(
-                    "Input Error",
-                    f"Employee '{name}' is not registered under store '{self.store_name}'."
-                )
+                messagebox.showerror("Input Error", f"'{name}' is not registered under '{self.store_name}'.")
                 connection.close()
                 return
 
-            query = """
+            cursor.execute(
+                """
                 INSERT INTO timesheet (storename, empname, clock_in, clock_out, regin, regout)
                 VALUES (%s, %s, %s, %s, %s, %s)
-            """
-            cursor.execute(query, (self.store_name, name, clock_in, clock_out, regin, regout))
+                """,
+                (self.store_name, name, clock_in, clock_out, regin_val, regout_val)
+            )
             connection.commit()
             cursor.close()
             connection.close()
 
-            messagebox.showinfo("Success", "Hours logged successfully!")
+            messagebox.showinfo("Success", "Hours and balances logged successfully!")
 
-            self.name_entry.delete(0, tk.END)
-            self.start_entry.delete(0, tk.END)
-            self.end_entry.delete(0, tk.END)
+            for entry in self.entries.values():
+                entry.delete(0, tk.END)
 
         except mysql.connector.Error as err:
             messagebox.showerror("Database Error", f"Error: {err}")
