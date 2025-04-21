@@ -61,7 +61,7 @@ class InvoiceScreen(tk.Frame):
         ttk.Button(self, text="Clear Filter", command=self.clear_filter).grid(row=filter_row, column=5)
 
     def go_back(self):
-        self.master.switch_screen(self.previous_screen.__class__, self.store_name, self.owner_name)
+        self.master.switch_screen(self.previous_screen.__class__, self.store_name)
 
     def get_selected_month_year(self):
         return self.selected_month, self.selected_year
