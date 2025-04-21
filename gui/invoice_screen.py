@@ -1,42 +1,308 @@
 # invoice_screen.py
-
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
+from datetime import datetime
+from db import get_connection
+from decimal import Decimal
 
 class InvoiceScreen(tk.Frame):
-    def __init__(self, master, store_name, previous_screen):
+    def __init__(self, master, store_name, previous_screen, selected_month=None, selected_year=None, owner_name=None):
         super().__init__(master)
         self.master = master
-        self.previous_screen = previous_screen
         self.store_name = store_name
+        self.previous_screen = previous_screen
+        self.owner_name = owner_name  # unused except if needed
+        # Default month/year
+        if selected_month is None or selected_year is None:
+            now = datetime.now()
+            self.selected_month = now.month
+            self.selected_year = now.year
+        else:
+            self.selected_month = selected_month
+            self.selected_year = selected_year
+        self.columns = ("Invoice #", "Date Received", "Company", "Amount", "Due Date", "Paid", "Date Paid", "Paid With")
         self.master.title("Invoices")
         self.master.geometry("900x600")
+        self.create_widgets()
+        self.fetch_invoice_data()
 
-        # Back and Edit buttons
-        tk.Button(self, text="<-Back", bg="orange", command=self.go_back).grid(row=0, column=0, padx=5, pady=5)
-        tk.Button(self, text="Invoices", bg="orange").grid(row=0, column=1, padx=5, pady=5)
-        tk.Button(self, text="Edit Table", bg="green").grid(row=0, column=2, padx=5, pady=5)
+    def create_widgets(self):
+        # Header
+        title = ttk.Label(self, text=f"Invoices - {self.store_name}", font=("Arial", 18, "bold"))
+        title.grid(row=0, column=0, columnspan=4, pady=10)
 
-        # Table frame
-        invoice_frame = tk.Frame(self)
-        invoice_frame.grid(row=1, column=0, columnspan=3, padx=10, pady=10)
+        # Back button
+        back_btn = ttk.Button(self, text="<- Back", command=self.go_back)
+        back_btn.grid(row=1, column=0, padx=10, pady=5, sticky="w")
 
-        # Create table
-        columns = ("Date Received", "Invoice Num", "Company", "Amount", "Due", "Paid", "Paid With", "Date Paid")
-        self.invoice_table = ttk.Treeview(invoice_frame, columns=columns, show="headings")
+        # Treeview
+        self.tree = ttk.Treeview(self, columns=self.columns, show="headings")
+        for col in self.columns:
+            self.tree.heading(col, text=col, anchor="w")
+            self.tree.column(col, width=100, anchor="w")
+        self.tree.grid(row=2, column=0, columnspan=4, padx=10, pady=10)
 
-        for col in columns:
-            self.invoice_table.heading(col, text=col)
-            self.invoice_table.column(col, width=100)
+        # Buttons
+        btn_row = 3
+        ttk.Button(self, text="Edit Row", command=self.edit_row).grid(row=btn_row, column=0, pady=5)
+        ttk.Button(self, text="Add Row", command=self.add_row).grid(row=btn_row, column=1, pady=5)
+        ttk.Button(self, text="Delete Row", command=self.delete_row).grid(row=btn_row, column=2, pady=5)
 
-        self.invoice_table.pack()
+        # Filter row
+        filter_row = btn_row + 1
+        tk.Label(self, text="Start Date (YYYY-MM-DD):").grid(row=filter_row, column=0, sticky="e")
+        self.start_date_entry = tk.Entry(self, width=12)
+        self.start_date_entry.grid(row=filter_row, column=1)
+        tk.Label(self, text="End Date (YYYY-MM-DD):").grid(row=filter_row, column=2, sticky="e")
+        self.end_date_entry = tk.Entry(self, width=12)
+        self.end_date_entry.grid(row=filter_row, column=3)
 
-        # Add row button
-        tk.Button(self, text="Add row", bg="lightgreen", command=self.add_invoice_row).grid(row=2, column=0, columnspan=3, pady=10)
-
-    def add_invoice_row(self):
-        # Add a new row to the invoice table
-        self.invoice_table.insert("", "end", values=("New Date", "New Invoice", "New Company", "New Amount", "New Due", "New Paid", "New Paid With", "New Date Paid"))
+        ttk.Button(self, text="Filter", command=self.filter_by_date).grid(row=filter_row, column=4, padx=5)
+        ttk.Button(self, text="Clear Filter", command=self.clear_filter).grid(row=filter_row, column=5)
 
     def go_back(self):
-        self.master.switch_screen(self.previous_screen.__class__, self.store_name)
+        self.master.switch_screen(self.previous_screen.__class__, self.store_name, self.owner_name)
+
+    def get_selected_month_year(self):
+        return self.selected_month, self.selected_year
+
+    def add_row(self):
+        """ Open a pop-up window to add a new invoice """
+        add_window = tk.Toplevel(self)
+        add_window.title("Add Invoice Entry")
+        add_window.geometry("400x480")
+
+        tk.Label(add_window, text="Invoice Number:").pack(pady=2)
+        invoice_entry = tk.Entry(add_window)
+        invoice_entry.pack(pady=2)
+
+        tk.Label(add_window, text="Date Received (YYYY-MM-DD):").pack(pady=2)
+        date_received_entry = tk.Entry(add_window)
+        date_received_entry.pack(pady=2)
+
+        tk.Label(add_window, text="Company:").pack(pady=2)
+        company_entry = tk.Entry(add_window)
+        company_entry.pack(pady=2)
+
+        tk.Label(add_window, text="Amount:").pack(pady=2)
+        amount_entry = tk.Entry(add_window)
+        amount_entry.pack(pady=2)
+
+        tk.Label(add_window, text="Due Date (YYYY-MM-DD):").pack(pady=2)
+        due_date_entry = tk.Entry(add_window)
+        due_date_entry.pack(pady=2)
+
+        tk.Label(add_window, text="Paid (True/False):").pack(pady=2)
+        paid_entry = tk.Entry(add_window)
+        paid_entry.pack(pady=2)
+
+        tk.Label(add_window, text="Date Paid (YYYY-MM-DD, optional):").pack(pady=2)
+        date_paid_entry = tk.Entry(add_window)
+        date_paid_entry.pack(pady=2)
+
+        tk.Label(add_window, text="Paid With (CREDIT/CASH, optional):").pack(pady=2)
+        paid_with_entry = tk.Entry(add_window)
+        paid_with_entry.pack(pady=2)
+
+        def save_entry():
+            """ Save invoice entry and close window """
+            invoicenum = invoice_entry.get().strip()
+            date_received = date_received_entry.get().strip()
+            company = company_entry.get().strip()
+            amount = amount_entry.get().strip()
+            due_date = due_date_entry.get().strip()
+            paid = paid_entry.get().strip().lower()
+            date_paid = date_paid_entry.get().strip()
+            paid_with = paid_with_entry.get().strip().upper()
+
+            if not all([invoicenum, date_received, company, amount, due_date, paid]):
+                messagebox.showwarning("Input Error", "Please fill in all required fields.")
+                return
+
+            try:
+                date_received = datetime.strptime(date_received, "%Y-%m-%d").date()
+                due_date = datetime.strptime(due_date, "%Y-%m-%d").date()
+                if date_paid:
+                    date_paid = datetime.strptime(date_paid, "%Y-%m-%d").date()
+                else:
+                    date_paid = None
+                    # Check if the entered date is within the selected month and year
+                if date_received.month != self.selected_month or date_received.year != self.selected_year:
+                    messagebox.showerror("Date Error",
+                                    f"Please enter invoices received within {self.selected_month}/{self.selected_year}.")
+                    return
+            except ValueError:
+                messagebox.showerror("Date Error", "Please use YYYY-MM-DD format for dates.")
+                return
+
+            if paid not in ["true", "false"]:
+                messagebox.showerror("Input Error", "Paid must be True or False.")
+                return
+
+            if paid_with not in ["CREDIT", "CASH"]:
+                messagebox.showerror("Input Error", "Paid With must be 'CREDIT' or 'CASH'.")
+                return
+
+            try:
+                amount = float(amount)
+            except ValueError:
+                messagebox.showerror("Input Error", "Amount must be a number.")
+                return
+
+            try:
+                conn = get_connection()
+                cursor = conn.cursor()
+                cursor.execute("""
+                    INSERT INTO invoices (invoicenum, storename, datereceived, company, amount, duedate, paid, datepaid, paidwith)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """, (invoicenum, self.store_name, date_received, company, amount, due_date, paid == "true", date_paid,
+                      paid_with))
+                conn.commit()
+                cursor.close()
+                conn.close()
+
+                messagebox.showinfo("Success", "Invoice added successfully!")
+                self.fetch_invoice_data()
+                add_window.destroy()
+
+            except Error as e:
+                messagebox.showerror("Error", f"Error adding invoice: {e}")
+
+        save_btn = tk.Button(add_window, text="Save", command=save_entry)
+        save_btn.pack(pady=10)
+
+        add_window.grab_set()
+
+    def delete_row(self):
+        sel = self.tree.selection()
+        if not sel:
+            messagebox.showwarning("Select Error", "Please select a row.")
+            return
+        inv = self.tree.item(sel, "values")[0]
+        if not messagebox.askyesno("Confirm", f"Delete invoice {inv}? "): return
+        try:
+            conn = get_connection()
+            cur = conn.cursor()
+            cur.execute("DELETE FROM invoices WHERE invoicenum = %s", (inv,))
+            conn.commit()
+            cur.close()
+            conn.close()
+            self.fetch_invoice_data()
+            messagebox.showinfo("Deleted", "Invoice deleted.")
+        except Exception as e:
+            messagebox.showerror("Error", f"Error deleting invoice: {e}")
+
+    def edit_row(self):
+        sel = self.tree.selection()
+        if not sel:
+            messagebox.showwarning("Select Error", "Please select a row.")
+            return
+        row = self.tree.item(sel, "values")
+        inv_num = row[0]
+        # Pre-fill via fetch
+        win = tk.Toplevel(self)
+        win.title("Edit Invoice")
+        win.geometry("350x350")
+        fields = ["Invoice #", "Date Received", "Company", "Amount", "Due Date", "Paid (True/False)", "Date Paid", "Paid With (CREDIT/CASH)"]
+        entries = {}
+        for i, label in enumerate(fields):
+            tk.Label(win, text=label).grid(row=i, column=0, padx=10, pady=5, sticky="e")
+            ent = tk.Entry(win)
+            ent.grid(row=i, column=1, padx=10, pady=5)
+            ent.insert(0, row[i])
+            if label == "Invoice #": ent.config(state="readonly")
+            entries[label] = ent
+
+        def save():
+            vals = {f: e.get().strip() for f,e in entries.items()}
+            # same validation as add_row...
+            # Update
+            try:
+                conn = get_connection()
+                cur = conn.cursor()
+                cur.execute(
+                    "UPDATE invoices SET datereceived=%s, company=%s, amount=%s, duedate=%s, paid=%s, datepaid=%s, paidwith=%s"
+                    " WHERE invoicenum=%s",
+                    (datetime.strptime(vals["Date Received"], "%Y-%m-%d").date(),
+                     vals["Company"], float(vals["Amount"]),
+                     datetime.strptime(vals["Due Date"], "%Y-%m-%d").date() if vals["Due Date"] else None,
+                     vals["Paid (True/False)"].lower() in ("true","1","yes"),
+                     datetime.strptime(vals["Date Paid"], "%Y-%m-%d").date() if vals["Date Paid"] else None,
+                     vals["Paid With (CREDIT/CASH)"].upper(),
+                     vals["Invoice #"]
+                    )
+                )
+                conn.commit()
+                cur.close()
+                conn.close()
+                messagebox.showinfo("Success", "Invoice updated.")
+                self.fetch_invoice_data()
+                win.destroy()
+            except Exception as e:
+                messagebox.showerror("Error", f"Error updating invoice: {e}")
+
+        ttk.Button(win, text="Save", command=save).grid(row=len(fields), columnspan=2, pady=10)
+        win.grab_set()
+
+    def fetch_invoice_data(self):
+        try:
+            conn = get_connection()
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT invoicenum, datereceived, company, amount, duedate, paid, datepaid, paidwith "
+                "FROM invoices WHERE storename=%s AND ((MONTH(duedate) = %s AND YEAR(duedate) = %s) "
+                "OR (MONTH(datereceived) = %s AND YEAR(datereceived) = %s)) "
+                "ORDER BY CASE WHEN paid = FALSE THEN duedate ELSE NULL END ASC, "
+                "CASE WHEN paid = TRUE THEN duedate ELSE NULL END DESC",
+                (self.store_name, self.selected_month, self.selected_year)
+            )
+            data = cur.fetchall()
+            cur.close()
+            conn.close()
+            # Clear
+            for i in self.tree.get_children(): self.tree.delete(i)
+            for row in data: self.tree.insert("", "end", values=row)
+            self.resize_columns()
+        except Exception as e:
+            print(f"Error fetching invoices: {e}")
+
+    def filter_by_date(self):
+        sd = self.start_date_entry.get().strip()
+        ed = self.end_date_entry.get().strip()
+        if not sd or not ed:
+            messagebox.showwarning("Input Error", "Enter both start and end dates.")
+            return
+        try:
+            d1 = datetime.strptime(sd, "%Y-%m-%d").date()
+            d2 = datetime.strptime(ed, "%Y-%m-%d").date()
+        except ValueError:
+            messagebox.showerror("Date Error", "Dates must be YYYY-MM-DD.")
+            return
+        try:
+            conn = get_connection(); cur = conn.cursor()
+            cur.execute(
+                "SELECT invoicenum, datereceived, company, amount, duedate, paid, datepaid, paidwith "
+                "FROM invoices WHERE storename=%s AND datereceived BETWEEN %s AND %s",
+                (self.store_name, d1, d2)
+            )
+            rows = cur.fetchall(); cur.close(); conn.close()
+            for i in self.tree.get_children(): self.tree.delete(i)
+            for r in rows: self.tree.insert("", "end", values=r)
+            self.resize_columns()
+        except Exception as e:
+            messagebox.showerror("Error", f"Error filtering: {e}")
+
+    def clear_filter(self):
+        self.start_date_entry.delete(0, tk.END)
+        self.end_date_entry.delete(0, tk.END)
+        self.fetch_invoice_data()
+        messagebox.showinfo("Filter Cleared", "Showing all invoices.")
+
+    def resize_columns(self):
+        min_w = 100
+        for i, col in enumerate(self.columns):
+            max_len = len(col)
+            for item in self.tree.get_children():
+                val = self.tree.item(item)["values"][i]
+                max_len = max(max_len, len(str(val)))
+            self.tree.column(col, width=max(min_w, max_len * 10))
