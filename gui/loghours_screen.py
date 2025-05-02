@@ -5,10 +5,11 @@ from db import get_connection
 import mysql.connector
 
 class LogHours(tk.Frame):
-    def __init__(self, root, store_name, previous_screen):
+    def __init__(self, root, store_name, user, previous_screen):
         super().__init__(root)
         self.root = root
         self.store_name = store_name
+        self.user = user
         self.previous_screen = previous_screen
         self.root.geometry("900x600")
         self.root.title("Log Hours")
@@ -23,7 +24,7 @@ class LogHours(tk.Frame):
         entry_frame = tk.Frame(self)
         entry_frame.pack(pady=20)
 
-        labels = ["Employee Name:", "Start Time (HH:MM):", "End Time (HH:MM):",
+        labels = ["Start Time (HH:MM):", "End Time (HH:MM):",
                   "Register In Balance:", "Register Out Balance:"]
         self.entries = {}
 
@@ -37,13 +38,12 @@ class LogHours(tk.Frame):
         submit_btn.pack(pady=20)
 
     def add_entry(self):
-        name = self.entries["Employee Name:"].get().strip()
         start_time = self.entries["Start Time (HH:MM):"].get().strip()
         end_time = self.entries["End Time (HH:MM):"].get().strip()
         regin = self.entries["Register In Balance:"].get().strip()
         regout = self.entries["Register Out Balance:"].get().strip()
 
-        if not all([name, start_time, end_time, regin, regout]):
+        if not all([start_time, end_time, regin, regout]):
             messagebox.showerror("Input Error", "All fields are required.")
             return
 
@@ -63,19 +63,12 @@ class LogHours(tk.Frame):
         try:
             connection = get_connection()
             cursor = connection.cursor()
-
-            cursor.execute("SELECT 1 FROM staff WHERE name = %s AND storename = %s", (name, self.store_name))
-            if not cursor.fetchone():
-                messagebox.showerror("Input Error", f"'{name}' is not registered under '{self.store_name}'.")
-                connection.close()
-                return
-
             cursor.execute(
                 """
                 INSERT INTO timesheet (storename, empname, clock_in, clock_out, regin, regout)
                 VALUES (%s, %s, %s, %s, %s, %s)
                 """,
-                (self.store_name, name, clock_in, clock_out, regin_val, regout_val)
+                (self.store_name, self.user, clock_in, clock_out, regin_val, regout_val)
             )
             connection.commit()
             cursor.close()
@@ -90,4 +83,4 @@ class LogHours(tk.Frame):
             messagebox.showerror("Database Error", f"Error: {err}")
 
     def go_back(self):
-        self.master.switch_screen(self.previous_screen.__class__, self.store_name)
+        self.master.switch_screen(self.previous_screen.__class__, self.store_name, self.user)

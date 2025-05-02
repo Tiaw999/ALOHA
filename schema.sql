@@ -68,7 +68,7 @@ CREATE TABLE IF NOT EXISTS withdrawals (
     empname VARCHAR(50),
     amount DECIMAL(10, 2),
     notes VARCHAR(100),
-    date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    date DATE,
     FOREIGN KEY(empname, storename) REFERENCES staff(name, storename)
 );
 

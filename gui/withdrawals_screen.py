@@ -6,11 +6,12 @@ from db import get_connection
 from mysql.connector import Error
 
 class WithdrawalsScreen(tk.Frame):
-    def __init__(self, master, store_name, previous_screen, selected_month=None, selected_year=None, owner_name = None):
+    def __init__(self, master, store_name, user, previous_screen, selected_month=None, selected_year=None, owner_name = None):
         super().__init__(master)
         self.columns = ("ID", "Employee Name", "Date", "Amount", "Notes")
         self.master = master
         self.store_name = store_name
+        self.user = user
         self.previous_screen = previous_screen
 
         # Default selected_month and selected_year if not passed
@@ -108,7 +109,7 @@ class WithdrawalsScreen(tk.Frame):
                 cursor.execute("""
                     INSERT INTO withdrawals (storename, empname, amount, notes, date)
                     VALUES (%s, %s, %s, %s, %s)
-                """, (self.store_name, self.owner_name, amount, notes_value, date))
+                """, (self.store_name, self.user, amount, notes_value, date))
 
                 conn.commit()
                 cursor.close()
@@ -242,7 +243,7 @@ class WithdrawalsScreen(tk.Frame):
         return self.owner_name
 
     def go_back(self):
-        self.master.switch_screen(self.previous_screen.__class__, self.store_name)
+        self.master.switch_screen(self.previous_screen.__class__, self.store_name, self.user)
 
     def fetch_withdrawal_data(self):
         try:

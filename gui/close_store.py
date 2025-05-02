@@ -8,11 +8,12 @@ from db import get_connection
 
 
 class CloseStore(tk.Frame):
-    def __init__(self, root, store_name, previous_screen):
+    def __init__(self, root, store_name, user, previous_screen):
         super().__init__(root)
         self.root = root
         self.root.title("Closing Tasks")
         self.store_name = store_name
+        self.user = user
         self.previous_screen = previous_screen
         self.pack(fill=tk.BOTH, expand=True)
 
@@ -84,4 +85,4 @@ class CloseStore(tk.Frame):
 
     def go_back(self):
         if self.previous_screen:
-            self.root.switch_screen(self.previous_screen.__class__, self.store_name)
+            self.root.switch_screen(self.previous_screen.__class__, self.store_name, self.user)

@@ -6,11 +6,12 @@ from db import get_connection
 
 
 class LogExpenses(tk.Frame):
-    def __init__(self, root, store_name=None, previous_screen=None):
+    def __init__(self, root, store_name, user, previous_screen=None):
         super().__init__(root)
         self.root = root
         self.root.title("Log Expenses")
         self.store_name = store_name
+        self.user = user
         self.previous_screen = previous_screen
         self.pack(fill=tk.BOTH, expand=True)
 
@@ -44,7 +45,7 @@ class LogExpenses(tk.Frame):
         add_btn.pack(pady=20)
 
     def go_back(self):
-        self.master.switch_screen(self.previous_screen.__class__, self.store_name)
+        self.master.switch_screen(self.previous_screen.__class__, self.store_name, self.user)
 
     def add_expense(self):
         exp_type = self.expense_type_entry.get().strip()

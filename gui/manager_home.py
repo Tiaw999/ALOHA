@@ -14,10 +14,11 @@ from gui.merchandise_screen import MerchandiseScreen
 from gui.invoice_screen import InvoiceScreen
 
 class ManagerHome(tk.Frame):
-    def __init__(self, master, store_name, previous_screen):
+    def __init__(self, master, store_name, user, previous_screen):
         super().__init__(master)
         self.master = master
         self.store_name = store_name
+        self.user = user
         self.master.title("Manager Home")
         self.master.geometry("900x600")
         self.create_widgets()
@@ -74,35 +75,35 @@ class ManagerHome(tk.Frame):
 
     def go_to_revenue(self):
         print("Go to Revenue Screen")
-        self.master.switch_screen(RevenueScreen, self.store_name)
+        self.master.switch_screen(RevenueScreen, self.store_name, self.user)
 
     def go_to_expenses(self):
         print("Go to Expenses Screen")
-        self.master.switch_screen(ExpensesScreen, self.store_name)
+        self.master.switch_screen(ExpensesScreen, self.store_name, self.user)
 
     def go_to_payroll(self):
         print("Go to Payroll Screen")
-        self.master.switch_screen(PayrollScreen, self.store_name)
+        self.master.switch_screen(PayrollScreen, self.store_name, self.user)
 
     def go_to_staff(self):
         print("Go to Staff Screen")
-        self.master.switch_screen(StaffScreen, self.store_name)
+        self.master.switch_screen(StaffScreen, self.store_name, self.user)
 
     def go_to_timesheet(self):
         print("Go to Timesheet Screen")
-        self.master.switch_screen(TimesheetScreen, self.store_name)
+        self.master.switch_screen(TimesheetScreen, self.store_name, self.user)
 
     def go_to_withdrawals(self):
         print("Go to Withdrawals Screen")
-        self.master.switch_screen(WithdrawalsScreen, self.store_name)
+        self.master.switch_screen(WithdrawalsScreen, self.store_name, self.user)
 
     def go_to_merchandise(self):
         print("Go to Merchandise Screen")
-        self.master.switch_screen(MerchandiseScreen, self.store_name)
+        self.master.switch_screen(MerchandiseScreen, self.store_name, self.user)
 
     def go_to_invoices(self):
         print("Go to Invoice Screen")
-        self.master.switch_screen(InvoiceScreen, self.store_name)
+        self.master.switch_screen(InvoiceScreen, self.store_name, self.user)
 
     def go_back(self):
         print("Back to Login Screen")

@@ -7,11 +7,12 @@ from datetime import datetime
 from db import get_connection
 
 class PayrollScreen(tk.Frame):
-    def __init__(self, master, store_name, previous_screen, selected_month=None, selected_year=None):
+    def __init__(self, master, store_name, user, previous_screen, selected_month=None, selected_year=None):
         super().__init__(master)
         self.columns = ("ID", "Employee Name", "Store", "Regular Pay", "Bonus", "Pay Date")
         self.master = master
         self.store_name = store_name
+        self.user = user
         self.previous_screen = previous_screen
 
         if selected_month is None or selected_year is None:
@@ -346,7 +347,7 @@ class PayrollScreen(tk.Frame):
         return self.selected_month, self.selected_year
 
     def go_back(self):
-        self.master.switch_screen(self.previous_screen.__class__, self.store_name)
+        self.master.switch_screen(self.previous_screen.__class__, self.store_name, self.user)
 
     def fetch_payroll_data(self):
         try:

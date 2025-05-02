@@ -5,11 +5,12 @@ from datetime import datetime
 from db import get_connection
 
 class StaffScreen(tk.Frame):
-    def __init__(self, master, store_name, previous_screen, selected_month=None, selected_year=None):
+    def __init__(self, master, store_name, user, previous_screen, selected_month=None, selected_year=None):
         super().__init__(master)
         self.columns = ("Name", "Role", "Hourly Rate", "Bonus Rate")
         self.master = master
         self.store_name = store_name
+        self.user = user
         self.previous_screen = previous_screen
 
         # Default selected_month and selected_year if not passed
@@ -280,7 +281,7 @@ class StaffScreen(tk.Frame):
         return self.selected_month, self.selected_year
 
     def go_back(self):
-        self.master.switch_screen(self.previous_screen.__class__, self.store_name)
+        self.master.switch_screen(self.previous_screen.__class__, self.store_name, self.user)
 
     def fetch_staff_data(self):
         try:

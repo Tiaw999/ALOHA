@@ -50,20 +50,18 @@ class LoginScreen(tk.Frame):
         user = self.user_entry.get()
         password = self.pass_entry.get()
 
-        role = db.authenticate_user(store, user, password)  # Assuming you have this function in db.py
+        role = db.authenticate_user(store, user, password)
         if role:
             messagebox.showinfo("Login Success", f"Welcome {role}: {user}")
 
             # Switch to the appropriate home screen based on the role
             if role == "Owner":
-                self.master.switch_screen(OwnerHome, store)
+                self.master.switch_screen(OwnerHome, store, user)
             elif role == "Manager":
-                self.master.switch_screen(ManagerHome, store)
+                self.master.switch_screen(ManagerHome, store, user)
             else:
-                self.master.switch_screen(EmployeeHome, store)
+                self.master.switch_screen(EmployeeHome, store, user)
         else:
             messagebox.showerror("Login Failed", "Invalid credentials. Please try again.")
 
-    def get_owner_name(self):
-        return self.user_entry.get()
 

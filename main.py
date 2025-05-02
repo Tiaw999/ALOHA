@@ -23,15 +23,11 @@ class Application(tk.Tk):
 
     def switch_screen(self, screen_class, *args):
         selected_month, selected_year = None, None
-        owner_name = None
         previous_screen_ref = self.current_screen
 
         # Screens that use month/year context
         month_aware_screens = [OwnerHome, RevenueScreen, ExpensesScreen, PayrollScreen,
                                StaffScreen, TimesheetScreen, MerchandiseScreen, InvoiceScreen]
-
-        # Screens that need owner_name (whether or not they use month/year)
-        owner_aware_screens = [LoginScreen, OwnerHome, WithdrawalsScreen]
 
         # Get context from the previous screen
         if previous_screen_ref:
@@ -39,24 +35,12 @@ class Application(tk.Tk):
             if hasattr(previous_screen_ref, "get_selected_month_year"):
                 selected_month, selected_year = previous_screen_ref.get_selected_month_year()
 
-            # If the previous screen supports owner_name, get it
-            if hasattr(previous_screen_ref, "get_owner_name"):
-                owner_name = previous_screen_ref.get_owner_name()
-
         # Destroy current screen
         if self.current_screen is not None:
             self.current_screen.destroy()
 
         # Create new screen with appropriate arguments
-        if screen_class in owner_aware_screens[1:]:
-            screen = screen_class(
-                self, *args,
-                previous_screen=previous_screen_ref,
-                selected_month=selected_month,
-                selected_year=selected_year,
-                owner_name=owner_name
-            )
-        elif screen_class in month_aware_screens:
+        if screen_class in month_aware_screens:
             screen = screen_class(
                 self, *args,
                 previous_screen=previous_screen_ref,

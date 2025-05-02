@@ -6,10 +6,11 @@ from db import get_connection
 from mysql.connector import Error
 
 class InvoiceScreen(tk.Frame):
-    def __init__(self, master, store_name, previous_screen, selected_month=None, selected_year=None, owner_name=None):
+    def __init__(self, master, store_name, user, previous_screen, selected_month=None, selected_year=None, owner_name=None):
         super().__init__(master)
         self.master = master
         self.store_name = store_name
+        self.user = user
         self.previous_screen = previous_screen
         self.owner_name = owner_name  # unused except if needed
         # Default month/year
@@ -61,7 +62,7 @@ class InvoiceScreen(tk.Frame):
         ttk.Button(self, text="Clear Filter", command=self.clear_filter).grid(row=filter_row, column=5)
 
     def go_back(self):
-        self.master.switch_screen(self.previous_screen.__class__, self.store_name)
+        self.master.switch_screen(self.previous_screen.__class__, self.store_name, self.user)
 
     def get_selected_month_year(self):
         return self.selected_month, self.selected_year
