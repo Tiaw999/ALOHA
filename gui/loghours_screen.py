@@ -1,4 +1,6 @@
 import tkinter as tk
+from tkinter import ttk
+print("Current theme:", ttk.Style().theme_use())
 from tkinter import messagebox
 from datetime import datetime
 from db import get_connection
@@ -16,26 +18,28 @@ class LogHours(tk.Frame):
         self.pack(fill=tk.BOTH, expand=True)
 
         # Title
-        tk.Label(self, text="Employee Hours", font=("Arial", 16)).pack(pady=10)
-        back_button = tk.Button(self, text="← Back", command=self.go_back)
+        ttk.Label(self, text="Employee Hours", font=("Arial", 16)).pack(pady=10)
+
+        back_button = ttk.Button(self, text="← Back", command=self.go_back)
         back_button.pack(anchor="nw", padx=10, pady=5)
 
-        # Input Frame
-        entry_frame = tk.Frame(self)
-        entry_frame.pack(pady=20)
+        # Form Frame
+        form_frame = ttk.Frame(self)
+        form_frame.pack(padx=10, pady=10)
 
         labels = ["Start Time (HH:MM):", "End Time (HH:MM):",
                   "Register In Balance:", "Register Out Balance:"]
         self.entries = {}
 
         for i, label_text in enumerate(labels):
-            tk.Label(entry_frame, text=label_text).grid(row=i, column=0, padx=5, pady=5, sticky="e")
-            entry = tk.Entry(entry_frame)
-            entry.grid(row=i, column=1, padx=5, pady=5)
+            ttk.Label(form_frame, text=label_text).grid(row=i, column=0, padx=10, pady=5, sticky="e")
+            entry = ttk.Entry(form_frame)
+            entry.grid(row=i, column=1, padx=10, pady=5)
             self.entries[label_text] = entry
 
-        submit_btn = tk.Button(self, text="Submit Hours", bg="#28a745", fg="white", command=self.add_entry)
-        submit_btn.pack(pady=20)
+        # Submit Button
+        submit_btn = ttk.Button(form_frame, text="Submit Hours", command=self.add_entry)
+        submit_btn.grid(row=len(labels), columnspan=2, pady=15)
 
     def add_entry(self):
         start_time = self.entries["Start Time (HH:MM):"].get().strip()

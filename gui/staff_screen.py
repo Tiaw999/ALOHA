@@ -60,32 +60,41 @@ class StaffScreen(tk.Frame):
         """Open a pop-up window to add a new staff member"""
         add_window = tk.Toplevel(self)
         add_window.title("Add Staff Member")
-        add_window.geometry("300x350")
+        add_window.geometry("340x260")
+
+        form_frame = tk.Frame(add_window)
+        form_frame.pack(padx=10, pady=10)
 
         # Name
-        tk.Label(add_window, text="Name:").pack(pady=2)
-        name_entry = tk.Entry(add_window)
-        name_entry.pack(pady=2)
+        tk.Label(form_frame, text="Name").grid(row=0, column=0, padx=10, pady=5, sticky="e")
+        name_entry = tk.Entry(form_frame)
+        name_entry.grid(row=0, column=1, padx=10, pady=5)
 
         # Hourly Rate
-        tk.Label(add_window, text="Hourly Rate:").pack(pady=2)
-        hourly_entry = tk.Entry(add_window)
-        hourly_entry.pack(pady=2)
+        tk.Label(form_frame, text="Hourly Rate").grid(row=1, column=0, padx=10, pady=5, sticky="e")
+        hourly_entry = tk.Entry(form_frame)
+        hourly_entry.grid(row=1, column=1, padx=10, pady=5)
 
         # Bonus Rate
-        tk.Label(add_window, text="Bonus Rate:").pack(pady=2)
-        bonus_entry = tk.Entry(add_window)
-        bonus_entry.pack(pady=2)
+        tk.Label(form_frame, text="Bonus Rate").grid(row=2, column=0, padx=10, pady=5, sticky="e")
+        bonus_entry = tk.Entry(form_frame)
+        bonus_entry.grid(row=2, column=1, padx=10, pady=5)
 
         # Password
-        tk.Label(add_window, text="Password:").pack(pady=2)
-        password_entry = tk.Entry(add_window, show="*")
-        password_entry.pack(pady=2)
+        tk.Label(form_frame, text="Password").grid(row=3, column=0, padx=10, pady=5, sticky="e")
+        password_entry = tk.Entry(form_frame, show="*")
+        password_entry.grid(row=3, column=1, padx=10, pady=5)
 
         # Role
-        tk.Label(add_window, text="Role:").pack(pady=2)
-        role_combobox = ttk.Combobox(add_window, values=["Owner", "Manager", "Employee"], state="readonly")
-        role_combobox.pack(pady=2)
+        tk.Label(form_frame, text="Role").grid(row=4, column=0, padx=10, pady=5, sticky="e")
+        role_combobox = ttk.Combobox(form_frame, values=["Owner", "Manager", "Employee"], state="readonly")
+        role_combobox.grid(row=4, column=1, padx=10, pady=5)
+
+        # Save button
+        save_button = ttk.Button(form_frame, text="Save Staff Member", command=lambda: save_staff())
+        save_button.grid(row=5, columnspan=2, pady=15)
+
+        add_window.grab_set()  # Make the window modal
 
         def save_staff():
             name = name_entry.get().strip()
@@ -122,11 +131,6 @@ class StaffScreen(tk.Frame):
 
             except Error as e:
                 messagebox.showerror("Database Error", f"Error adding staff member: {e}")
-
-        save_btn = tk.Button(add_window, text="Save", command=save_staff)
-        save_btn.pack(pady=10)
-
-        add_window.grab_set()
 
     def delete_row(self):
         """Deletes a selected staff member from the Treeview and the database"""

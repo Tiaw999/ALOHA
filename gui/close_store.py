@@ -1,6 +1,6 @@
 # close_store.py
 import tkinter as tk
-import tkinter as tk
+from tkinter import ttk
 from tkinter import messagebox
 import mysql.connector
 
@@ -11,45 +11,40 @@ class CloseStore(tk.Frame):
     def __init__(self, root, store_name, user, previous_screen):
         super().__init__(root)
         self.root = root
-        self.root.title("Closing Tasks")
         self.store_name = store_name
         self.user = user
         self.previous_screen = previous_screen
         self.pack(fill=tk.BOTH, expand=True)
 
-        # Back Button - Top Left
-        self.back_button = tk.Button(self, text="<- Back", command=self.go_back)
-        self.back_button.place(x=10, y=10)
+        # Title
+        ttk.Label(self, text="Store Close", font=("Arial", 16)).pack(pady=20)
 
-        # Form Title
-        tk.Label(self, text="Enter the following:").grid(row=1, columnspan=2, pady=20)
+        # Back Button
+        back_button = ttk.Button(self, text="← Back", command=self.go_back)
+        back_button.pack(anchor="nw", padx=10, pady=10)
+
+        # Input fields
+        form_frame = ttk.Frame(self)
+        form_frame.pack(padx=10, pady=10)
 
         # Reg Entry
-        tk.Label(self, text="Reg:").grid(row=2, column=0, sticky='w', padx=10)
-        self.reg_entry = tk.Entry(self)
-        self.reg_entry.grid(row=2, column=1, padx=5)
+        ttk.Label(form_frame, text="Reg:").grid(row=0, column=0, padx=10, pady=5, sticky="e")
+        self.reg_entry = ttk.Entry(form_frame)
+        self.reg_entry.grid(row=0, column=1, padx=5, pady=5)
 
         # Credit Entry
-        tk.Label(self, text="Credit:").grid(row=3, column=0, sticky='w', padx=10)
-        self.credit_entry = tk.Entry(self)
-        self.credit_entry.grid(row=3, column=1, padx=5)
+        ttk.Label(form_frame, text="Credit:").grid(row=1, column=0, padx=10, pady=5, sticky="e")
+        self.credit_entry = ttk.Entry(form_frame)
+        self.credit_entry.grid(row=1, column=1, padx=5, pady=5)
 
         # Cash Entry
-        tk.Label(self, text="Cash In Envelope:").grid(row=4, column=0, sticky='w', padx=10)
-        self.cash_entry = tk.Entry(self)
-        self.cash_entry.grid(row=4, column=1, padx=5)
+        ttk.Label(form_frame, text="Cash In Envelope:").grid(row=2, column=0, padx=10, pady=5, sticky="e")
+        self.cash_entry = ttk.Entry(form_frame)
+        self.cash_entry.grid(row=2, column=1, padx=5, pady=5)
 
-        # Enter Button
-        self.enter_button = tk.Button(
-            self,
-            text="Enter",
-            bg="#007bff",
-            fg="white",
-            activebackground="#0056b3",
-            activeforeground="white",
-            command=self.submit_data  # <== Hook up the logic
-        )
-        self.enter_button.grid(row=5, column=0, columnspan=2, pady=20)
+        # Submit Button
+        submit_btn = ttk.Button(form_frame, text="Enter", command=self.submit_data)
+        submit_btn.grid(row=3, columnspan=2, pady=20)
 
     def submit_data(self):
         try:

@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import ttk
 from tkinter import messagebox
 import mysql.connector
 
@@ -6,7 +7,7 @@ from db import get_connection
 
 
 class LogExpenses(tk.Frame):
-    def __init__(self, root, store_name, user, previous_screen=None):
+    def __init__(self, root, store_name, user, previous_screen):
         super().__init__(root)
         self.root = root
         self.root.title("Log Expenses")
@@ -15,34 +16,28 @@ class LogExpenses(tk.Frame):
         self.previous_screen = previous_screen
         self.pack(fill=tk.BOTH, expand=True)
 
-        # Back Button - Top Left
-        self.back_button = tk.Button(self, text="<- Back", command=self.go_back)
-        self.back_button.place(x=10, y=10)
-
         # Title
-        tk.Label(self, text="Store Expenses", font=("Arial", 16)).pack(pady=20)
+        ttk.Label(self, text="Store Expenses", font=("Arial", 16)).pack(pady=20)
+
+        # Back Button
+        back_button = ttk.Button(self, text="← Back", command=self.go_back)
+        back_button.pack(anchor="nw", padx=10, pady=5)
 
         # Input fields
-        entry_frame = tk.Frame(self)
-        entry_frame.pack(pady=10)
+        form_frame = ttk.Frame(self)
+        form_frame.pack(padx=10, pady=10)
 
-        tk.Label(entry_frame, text="Expense Type:").grid(row=0, column=0, padx=5, pady=5)
-        self.expense_type_entry = tk.Entry(entry_frame)
-        self.expense_type_entry.grid(row=0, column=1, padx=5, pady=5)
+        ttk.Label(form_frame, text="Expense Type:").grid(row=0, column=0, padx=10, pady=5, sticky="e")
+        self.expense_type_entry = ttk.Entry(form_frame)
+        self.expense_type_entry.grid(row=0, column=1, padx=10, pady=5)
 
-        tk.Label(entry_frame, text="Amount ($):").grid(row=1, column=0, padx=5, pady=5)
-        self.expense_amount_entry = tk.Entry(entry_frame)
-        self.expense_amount_entry.grid(row=1, column=1, padx=5, pady=5)
+        ttk.Label(form_frame, text="Amount ($):").grid(row=1, column=0, padx=10, pady=5, sticky="e")
+        self.expense_amount_entry = ttk.Entry(form_frame)
+        self.expense_amount_entry.grid(row=1, column=1, padx=10, pady=5)
 
-        # Submit button
-        add_btn = tk.Button(
-            self,
-            text="Submit Expense",
-            bg="#007bff",
-            fg="white",
-            command=self.add_expense
-        )
-        add_btn.pack(pady=20)
+        # Submit Button
+        submit_btn = ttk.Button(form_frame, text="Submit Expense", command=self.add_expense)
+        submit_btn.grid(row=2, columnspan=2, pady=15)
 
     def go_back(self):
         self.master.switch_screen(self.previous_screen.__class__, self.store_name, self.user)

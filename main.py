@@ -27,7 +27,7 @@ class Application(tk.Tk):
 
         # Screens that use month/year context
         month_aware_screens = [OwnerHome, RevenueScreen, ExpensesScreen, PayrollScreen,
-                               StaffScreen, TimesheetScreen, MerchandiseScreen, InvoiceScreen]
+                               StaffScreen, TimesheetScreen, MerchandiseScreen, InvoiceScreen, WithdrawalsScreen]
 
         # Get context from the previous screen
         if previous_screen_ref:

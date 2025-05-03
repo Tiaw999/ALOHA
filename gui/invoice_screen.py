@@ -71,39 +71,57 @@ class InvoiceScreen(tk.Frame):
         """ Open a pop-up window to add a new invoice """
         add_window = tk.Toplevel(self)
         add_window.title("Add Invoice Entry")
-        add_window.geometry("400x480")
+        add_window.geometry("460x350")
 
-        tk.Label(add_window, text="Invoice Number:").pack(pady=2)
-        invoice_entry = tk.Entry(add_window)
-        invoice_entry.pack(pady=2)
+        form_frame = tk.Frame(add_window)
+        form_frame.pack(padx=10, pady=10)
 
-        tk.Label(add_window, text="Date Received (YYYY-MM-DD):").pack(pady=2)
-        date_received_entry = tk.Entry(add_window)
-        date_received_entry.pack(pady=2)
+        # Invoice Number
+        tk.Label(form_frame, text="Invoice Number").grid(row=0, column=0, padx=10, pady=5, sticky="e")
+        invoice_entry = tk.Entry(form_frame)
+        invoice_entry.grid(row=0, column=1, padx=10, pady=5)
 
-        tk.Label(add_window, text="Company:").pack(pady=2)
-        company_entry = tk.Entry(add_window)
-        company_entry.pack(pady=2)
+        # Date Received
+        tk.Label(form_frame, text="Date Received (YYYY-MM-DD)").grid(row=1, column=0, padx=10, pady=5, sticky="e")
+        date_received_entry = tk.Entry(form_frame)
+        date_received_entry.grid(row=1, column=1, padx=10, pady=5)
 
-        tk.Label(add_window, text="Amount:").pack(pady=2)
-        amount_entry = tk.Entry(add_window)
-        amount_entry.pack(pady=2)
+        # Company
+        tk.Label(form_frame, text="Company").grid(row=2, column=0, padx=10, pady=5, sticky="e")
+        company_entry = tk.Entry(form_frame)
+        company_entry.grid(row=2, column=1, padx=10, pady=5)
 
-        tk.Label(add_window, text="Due Date (YYYY-MM-DD):").pack(pady=2)
-        due_date_entry = tk.Entry(add_window)
-        due_date_entry.pack(pady=2)
+        # Amount
+        tk.Label(form_frame, text="Amount").grid(row=3, column=0, padx=10, pady=5, sticky="e")
+        amount_entry = tk.Entry(form_frame)
+        amount_entry.grid(row=3, column=1, padx=10, pady=5)
 
-        tk.Label(add_window, text="Paid (True/False):").pack(pady=2)
-        paid_entry = tk.Entry(add_window)
-        paid_entry.pack(pady=2)
+        # Due Date
+        tk.Label(form_frame, text="Due Date (YYYY-MM-DD)").grid(row=4, column=0, padx=10, pady=5, sticky="e")
+        due_date_entry = tk.Entry(form_frame)
+        due_date_entry.grid(row=4, column=1, padx=10, pady=5)
 
-        tk.Label(add_window, text="Date Paid (YYYY-MM-DD, optional):").pack(pady=2)
-        date_paid_entry = tk.Entry(add_window)
-        date_paid_entry.pack(pady=2)
+        # Paid
+        tk.Label(form_frame, text="Paid (True/False)").grid(row=5, column=0, padx=10, pady=5, sticky="e")
+        paid_entry = tk.Entry(form_frame)
+        paid_entry.grid(row=5, column=1, padx=10, pady=5)
 
-        tk.Label(add_window, text="Paid With (CREDIT/CASH, optional):").pack(pady=2)
-        paid_with_entry = tk.Entry(add_window)
-        paid_with_entry.pack(pady=2)
+        # Date Paid
+        tk.Label(form_frame, text="Date Paid (YYYY-MM-DD, optional)").grid(row=6, column=0, padx=10, pady=5, sticky="e")
+        date_paid_entry = tk.Entry(form_frame)
+        date_paid_entry.grid(row=6, column=1, padx=10, pady=5)
+
+        # Paid With
+        tk.Label(form_frame, text="Paid With (CREDIT/CASH, optional)").grid(row=7, column=0, padx=10, pady=5,
+                                                                            sticky="e")
+        paid_with_entry = tk.Entry(form_frame)
+        paid_with_entry.grid(row=7, column=1, padx=10, pady=5)
+
+        # Save Button
+        save_button = ttk.Button(form_frame, text="Save Invoice", command=lambda: save_entry())
+        save_button.grid(row=8, columnspan=2, pady=15)
+
+        add_window.grab_set()  # Make the window modal
 
         def save_entry():
             """ Save invoice entry and close window """
@@ -168,11 +186,6 @@ class InvoiceScreen(tk.Frame):
 
             except Error as e:
                 messagebox.showerror("Error", f"Error adding invoice: {e}")
-
-        save_btn = tk.Button(add_window, text="Save", command=save_entry)
-        save_btn.pack(pady=10)
-
-        add_window.grab_set()
 
     def delete_row(self):
         sel = self.tree.selection()

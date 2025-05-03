@@ -78,23 +78,36 @@ class RevenueScreen(tk.Frame):
         """ Open a pop-up window to add a new revenue row """
         add_window = tk.Toplevel(self)
         add_window.title("Add Revenue Entry")
-        add_window.geometry("300x260")
+        add_window.geometry("380x220")
 
-        tk.Label(add_window, text="Date (YYYY-MM-DD):").pack(pady=2)
-        date_entry = tk.Entry(add_window)
-        date_entry.pack(pady=2)
+        form_frame = tk.Frame(add_window)
+        form_frame.pack(padx=10, pady=10)
 
-        tk.Label(add_window, text="Reg:").pack(pady=2)
-        reg_entry = tk.Entry(add_window)
-        reg_entry.pack(pady=2)
+        # Date field
+        tk.Label(form_frame, text="Date (YYYY-MM-DD)").grid(row=0, column=0, padx=10, pady=5, sticky="e")
+        date_entry = tk.Entry(form_frame)
+        date_entry.grid(row=0, column=1, padx=10, pady=5)
 
-        tk.Label(add_window, text="Credit:").pack(pady=2)
-        credit_entry = tk.Entry(add_window)
-        credit_entry.pack(pady=2)
+        # Reg field
+        tk.Label(form_frame, text="Reg").grid(row=1, column=0, padx=10, pady=5, sticky="e")
+        reg_entry = tk.Entry(form_frame)
+        reg_entry.grid(row=1, column=1, padx=10, pady=5)
 
-        tk.Label(add_window, text="Cash in Envelope:").pack(pady=2)
-        cash_entry = tk.Entry(add_window)
-        cash_entry.pack(pady=2)
+        # Credit field
+        tk.Label(form_frame, text="Credit").grid(row=2, column=0, padx=10, pady=5, sticky="e")
+        credit_entry = tk.Entry(form_frame)
+        credit_entry.grid(row=2, column=1, padx=10, pady=5)
+
+        # Cash in Envelope field
+        tk.Label(form_frame, text="Cash in Envelope").grid(row=3, column=0, padx=10, pady=5, sticky="e")
+        cash_entry = tk.Entry(form_frame)
+        cash_entry.grid(row=3, column=1, padx=10, pady=5)
+
+        # Save button
+        save_button = ttk.Button(form_frame, text="Save Entry", command=lambda: save_entry())
+        save_button.grid(row=4, columnspan=2, pady=10)
+
+        add_window.grab_set()  # Make the window modal
 
         def save_entry():
             """ Save data and close window """
@@ -145,11 +158,6 @@ class RevenueScreen(tk.Frame):
 
             except Error as e:
                 messagebox.showerror("Error", f"Error adding revenue data: {e}")
-
-        save_btn = tk.Button(add_window, text="Save", command=save_entry)
-        save_btn.pack(pady=10)
-
-        add_window.grab_set()  # Make window modal (prevents interaction with main window)
 
     # Delete Row Function
     def delete_row(self):

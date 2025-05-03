@@ -80,19 +80,31 @@ class ExpensesScreen(tk.Frame):
         """ Open a pop-up window to add a new expense row """
         add_window = tk.Toplevel(self)
         add_window.title("Add Expense Entry")
-        add_window.geometry("300x225")
+        add_window.geometry("380x180")
 
-        tk.Label(add_window, text="Date (YYYY-MM-DD):").pack(pady=2)
-        date_entry = tk.Entry(add_window)
-        date_entry.pack(pady=2)
+        form_frame = tk.Frame(add_window)
+        form_frame.pack(padx=10, pady=10)
 
-        tk.Label(add_window, text="Expense Type:").pack(pady=2)
-        type_entry = tk.Entry(add_window)
-        type_entry.pack(pady=2)
+        # Date field
+        tk.Label(form_frame, text="Date (YYYY-MM-DD)").grid(row=0, column=0, padx=10, pady=5, sticky="e")
+        date_entry = tk.Entry(form_frame)
+        date_entry.grid(row=0, column=1, padx=10, pady=5)
 
-        tk.Label(add_window, text="Expense Value:").pack(pady=2)
-        value_entry = tk.Entry(add_window)
-        value_entry.pack(pady=2)
+        # Expense Type field
+        tk.Label(form_frame, text="Expense Type").grid(row=1, column=0, padx=10, pady=5, sticky="e")
+        type_entry = tk.Entry(form_frame)
+        type_entry.grid(row=1, column=1, padx=10, pady=5)
+
+        # Expense Value field
+        tk.Label(form_frame, text="Expense Value").grid(row=2, column=0, padx=10, pady=5, sticky="e")
+        value_entry = tk.Entry(form_frame)
+        value_entry.grid(row=2, column=1, padx=10, pady=5)
+
+        # Save button
+        save_button = ttk.Button(form_frame, text="Save Expense", command=lambda: save_entry())
+        save_button.grid(row=3, columnspan=2, pady=10)
+
+        add_window.grab_set()  # Make the window modal
 
         def save_entry():
             """ Save data and close window """
@@ -131,11 +143,6 @@ class ExpensesScreen(tk.Frame):
             except Error as e:
                 # If there's an error, show it in a messagebox
                 messagebox.showerror("Error", f"Error adding expense data: {e}")
-
-        save_btn = tk.Button(add_window, text="Save", command=save_entry)
-        save_btn.pack(pady=10)
-
-        add_window.grab_set()  # Make window modal
 
     def delete_row(self):
         """ Deletes a selected expense row from the Treeview and the database """
