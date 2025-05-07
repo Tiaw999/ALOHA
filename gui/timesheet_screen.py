@@ -131,11 +131,19 @@ class TimesheetScreen(tk.Frame):
             try:
                 clock_in = datetime.strptime(clock_in_str, "%Y-%m-%d %H:%M:%S")
                 clock_out = datetime.strptime(clock_out_str, "%Y-%m-%d %H:%M:%S")
+
+                # Check if both clock_in and clock_out are within the selected month/year
                 if (clock_in.month != self.selected_month or clock_in.year != self.selected_year or
                         clock_out.month != self.selected_month or clock_out.year != self.selected_year):
                     messagebox.showerror("Date Error",
                                          f"Please enter times within {self.selected_month}/{self.selected_year}.")
                     return
+
+                # Ensure clock_in and clock_out are on the same calendar day
+                if clock_in.date() != clock_out.date():
+                    messagebox.showerror("Date Error", "Clock-in and clock-out must be on the same day.")
+                    return
+
             except ValueError:
                 messagebox.showerror("Date Error", "Invalid datetime format. Use YYYY-MM-DD HH:MM:SS.")
                 return
@@ -259,6 +267,11 @@ class TimesheetScreen(tk.Frame):
                 if (clock_in.month != self.selected_month or clock_in.year != self.selected_year or clock_out.month != self.selected_month or clock_out.year != self.selected_year):
                     messagebox.showerror("Date Error",
                                          f"Please enter times within {self.selected_month}/{self.selected_year}.")
+                    return
+
+                # Ensure clock_in and clock_out are on the same calendar day
+                if clock_in.date() != clock_out.date():
+                    messagebox.showerror("Date Error", "Clock-in and clock-out must be on the same day.")
                     return
 
                 regin = float(new_values[2])

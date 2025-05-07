@@ -39,7 +39,13 @@ def authenticate_user(storename, name, password):
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute(
-        "SELECT role FROM staff WHERE storename = %s AND name = %s AND password = %s",
+        """
+        SELECT role 
+        FROM staff 
+        WHERE storename = %s 
+        AND BINARY name = %s 
+        AND BINARY password = %s
+        """,
         (storename, name, password)
     )
     result = cursor.fetchone()
