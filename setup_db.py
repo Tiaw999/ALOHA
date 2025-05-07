@@ -41,8 +41,8 @@ def execute_sql_file(filename, use_db=True):
                 try:
                     print(f"Executing: {statement}")  # Debugging statement execution
                     cursor.execute(statement)  # Execute each SQL command
-                except Exception as e:
-                    print(f"Error executing statement: {e}")
+                except Exception:
+                    pass
         conn.commit()
         print(f"✅ Executed SQL file: {filename}")
         cursor.close()

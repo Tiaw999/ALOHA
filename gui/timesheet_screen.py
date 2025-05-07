@@ -117,7 +117,7 @@ class TimesheetScreen(tk.Frame):
         regout_entry.pack(pady=2)
 
         def save_entry():
-            """ Save data and close window """
+            """ Save data and close window as a transaction """
             empname = employee_dropdown.get().strip()
             clock_in_str = clock_in_entry.get().strip()
             clock_out_str = clock_out_entry.get().strip()
@@ -128,12 +128,11 @@ class TimesheetScreen(tk.Frame):
                 messagebox.showwarning("Input Error", "All fields are required.")
                 return
 
-            # Validate datetime format for clock-in and clock-out
             try:
                 clock_in = datetime.strptime(clock_in_str, "%Y-%m-%d %H:%M:%S")
                 clock_out = datetime.strptime(clock_out_str, "%Y-%m-%d %H:%M:%S")
-                # Check if the entered date is within the selected month and year
-                if (clock_in.month != self.selected_month or clock_in.year != self.selected_year or clock_out.month != self.selected_month or clock_out.year != self.selected_year):
+                if (clock_in.month != self.selected_month or clock_in.year != self.selected_year or
+                        clock_out.month != self.selected_month or clock_out.year != self.selected_year):
                     messagebox.showerror("Date Error",
                                          f"Please enter times within {self.selected_month}/{self.selected_year}.")
                     return
@@ -141,7 +140,6 @@ class TimesheetScreen(tk.Frame):
                 messagebox.showerror("Date Error", "Invalid datetime format. Use YYYY-MM-DD HH:MM:SS.")
                 return
 
-            # Validate that Register In and Register Out are numeric
             try:
                 float(regin)
                 float(regout)
@@ -149,24 +147,34 @@ class TimesheetScreen(tk.Frame):
                 messagebox.showerror("Input Error", "Register In and Register Out must be numbers.")
                 return
 
-            # Insert the data into the database
+            conn = None
+            cursor = None
             try:
                 conn = get_connection()
+                conn.start_transaction()
                 cursor = conn.cursor()
+
                 cursor.execute("""
                     INSERT INTO timesheet (storename, empname, clock_in, clock_out, regin, regout)
                     VALUES (%s, %s, %s, %s, %s, %s)
                 """, (self.store_name, empname, clock_in, clock_out, regin, regout))
+
                 conn.commit()
-                cursor.close()
-                conn.close()
 
                 messagebox.showinfo("Success", "New timesheet entry added successfully!")
-                self.fetch_timesheet_data()  # Refresh table
-                add_window.destroy()  # Close window after saving
+                self.fetch_timesheet_data()
+                add_window.destroy()
 
             except Error as e:
+                if conn:
+                    conn.rollback()
                 messagebox.showerror("Error", f"Error adding timesheet data: {e}")
+
+            finally:
+                if cursor:
+                    cursor.close()
+                if conn:
+                    conn.close()
 
         save_btn = ttk.Button(add_window, text="Save", command=save_entry)
         save_btn.pack(pady=10)
@@ -175,35 +183,43 @@ class TimesheetScreen(tk.Frame):
 
     # Delete Row Function
     def delete_row(self):
-        """ Deletes a selected row from the Treeview and the database """
+        """ Deletes a selected row from the Treeview and the database as a transaction """
         selected_item = self.tree.selection()  # Get the selected item
 
         if not selected_item:
             messagebox.showwarning("Selection Error", "Please select a row to delete.")
             return
 
-        # Get the ID of the selected row (assuming ID is the first value in the row)
-        row_id = self.tree.item(selected_item, "values")[0]  # Assuming ID is the first value in the row
+        row_id = self.tree.item(selected_item, "values")[0]
 
-        # Confirm the deletion with the user
         confirm = messagebox.askyesno("Confirm Deletion",
                                       f"Are you sure you want to delete the record with ID {row_id}?")
 
         if confirm:
+            conn = None
+            cursor = None
             try:
                 conn = get_connection()
+                conn.start_transaction()
                 cursor = conn.cursor()
-                # Delete the row with the corresponding ID from the timesheet table
+
                 cursor.execute("DELETE FROM timesheet WHERE id = %s", (row_id,))
+
                 conn.commit()
 
-                cursor.close()
-                conn.close()
-
                 messagebox.showinfo("Success", "Row deleted successfully!")
-                self.fetch_timesheet_data()  # Refresh table
+                self.fetch_timesheet_data()
+
             except Error as e:
+                if conn:
+                    conn.rollback()
                 messagebox.showerror("Error", f"Failed to delete row: {e}")
+
+            finally:
+                if cursor:
+                    cursor.close()
+                if conn:
+                    conn.close()
 
     def edit_row(self):
         selected_item = self.tree.selection()
@@ -259,8 +275,11 @@ class TimesheetScreen(tk.Frame):
         save_button.grid(row=len(labels), columnspan=2, pady=10)
 
     def update_timesheet_data(self, record_id, clock_in, clock_out, regin, regout):
+        conn = None
+        cursor = None
         try:
             conn = get_connection()
+            conn.start_transaction()
             cursor = conn.cursor()
 
             cursor.execute("""
@@ -271,14 +290,19 @@ class TimesheetScreen(tk.Frame):
 
             conn.commit()
 
-            cursor.close()
-            conn.close()
-
             messagebox.showinfo("Success", "Timesheet record updated successfully!")
             self.fetch_timesheet_data()  # Refresh table
 
         except Error as e:
+            if conn:
+                conn.rollback()
             messagebox.showerror("Error", f"Error updating timesheet data: {e}")
+
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
 
     def get_selected_month_year(self):
         return self.selected_month, self.selected_year

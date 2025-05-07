@@ -75,7 +75,6 @@ class WithdrawalsScreen(tk.Frame):
         notes_entry = tk.Entry(add_window)
         notes_entry.pack(pady=2)
 
-        # Save Button
         def save_entry():
             # Get the values entered by the user
             date_value = date_entry.get()
@@ -102,8 +101,11 @@ class WithdrawalsScreen(tk.Frame):
                 return
 
             # Save the withdrawal to the database
+            conn = None
+            cursor = None
             try:
                 conn = get_connection()
+                conn.start_transaction()
                 cursor = conn.cursor()
 
                 cursor.execute("""
@@ -112,15 +114,21 @@ class WithdrawalsScreen(tk.Frame):
                 """, (self.store_name, self.user, amount, notes_value, date))
 
                 conn.commit()
-                cursor.close()
-                conn.close()
 
                 messagebox.showinfo("Success", "Withdrawal entry added successfully!")
                 self.fetch_withdrawal_data()  # Refresh table with new data
                 add_window.destroy()  # Close the add window
 
             except Exception as e:
+                if conn:
+                    conn.rollback()
                 messagebox.showerror("Database Error", f"Error saving withdrawal entry: {e}")
+
+            finally:
+                if cursor:
+                    cursor.close()
+                if conn:
+                    conn.close()
 
         save_button = ttk.Button(add_window, text="Save", command=save_entry)
         save_button.pack(pady=10)
@@ -133,29 +141,39 @@ class WithdrawalsScreen(tk.Frame):
             messagebox.showwarning("Selection Error", "Please select a row to delete.")
             return
 
-        # Get the ID of the selected row (assuming ID is in the first column)
-        row_id = self.tree.item(selected_item, "values")[0]  # Assuming ID is the first value in the row
+        # Get the ID of the selected row (assuming ID is the first column)
+        row_id = self.tree.item(selected_item, "values")[0]
 
         # Confirm the deletion with the user
-        confirm = messagebox.askyesno("Confirm Deletion",
-                                      f"Are you sure you want to delete the withdrawal record with ID {row_id}?")
+        confirm = messagebox.askyesno(
+            "Confirm Deletion",
+            f"Are you sure you want to delete the withdrawal record with ID {row_id}?"
+        )
 
         if confirm:
+            conn = None
+            cursor = None
             try:
                 conn = get_connection()
+                conn.start_transaction()
                 cursor = conn.cursor()
 
-                # Delete the row with the corresponding ID from the withdrawals table
                 cursor.execute("DELETE FROM withdrawals WHERE id = %s", (row_id,))
                 conn.commit()
 
-                cursor.close()
-                conn.close()
-
                 messagebox.showinfo("Success", "Withdrawal entry deleted successfully!")
                 self.fetch_withdrawal_data()  # Refresh table with updated data
+
             except Exception as e:
+                if conn:
+                    conn.rollback()
                 messagebox.showerror("Error", f"Failed to delete withdrawal entry: {e}")
+
+            finally:
+                if cursor:
+                    cursor.close()
+                if conn:
+                    conn.close()
 
     def edit_row(self):
         selected_item = self.tree.selection()
@@ -216,8 +234,11 @@ class WithdrawalsScreen(tk.Frame):
         save_button.grid(row=len(labels), columnspan=2, pady=10)
 
     def update_withdrawal_data(self, record_id, new_values):
+        conn = None
+        cursor = None
         try:
             conn = get_connection()
+            conn.start_transaction()
             cursor = conn.cursor()
 
             cursor.execute("""
@@ -227,14 +248,20 @@ class WithdrawalsScreen(tk.Frame):
             """, (*new_values, record_id))
 
             conn.commit()
-            cursor.close()
-            conn.close()
 
             messagebox.showinfo("Success", "Withdrawal record updated successfully!")
             self.fetch_withdrawal_data()  # Refresh table
 
         except Error as e:
+            if conn:
+                conn.rollback()
             messagebox.showerror("Error", f"Error updating withdrawal data: {e}")
+
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
 
     def get_selected_month_year(self):
         return self.selected_month, self.selected_year
