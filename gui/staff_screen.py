@@ -3,6 +3,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from datetime import datetime
 from db import get_connection
+from mysql.connector import Error
 
 class StaffScreen(tk.Frame):
     def __init__(self, master, store_name, user, previous_screen, selected_month=None, selected_year=None):
@@ -117,10 +118,13 @@ class StaffScreen(tk.Frame):
             try:
                 conn = get_connection()
                 cursor = conn.cursor()
+                conn.start_transaction()
+
                 cursor.execute("""
                     INSERT INTO staff (name, storename, hourlyrate, bonusrate, password, role)
                     VALUES (%s, %s, %s, %s, %s, %s)
                 """, (name, self.store_name, hourly, bonus, password, role))
+
                 conn.commit()
                 cursor.close()
                 conn.close()
@@ -130,7 +134,10 @@ class StaffScreen(tk.Frame):
                 add_window.destroy()
 
             except Error as e:
+                conn.rollback()
                 messagebox.showerror("Database Error", f"Error adding staff member: {e}")
+                if cursor: cursor.close()
+                if conn: conn.close()
 
     def delete_row(self):
         """Deletes a selected staff member from the Treeview and the database"""
@@ -140,30 +147,44 @@ class StaffScreen(tk.Frame):
             messagebox.showwarning("Selection Error", "Please select a row to delete.")
             return
 
-        # Get the staff name and store from the selected row
         values = self.tree.item(selected_item, "values")
         name = values[0]
-        storename = self.store_name  # Since this screen is store-specific
+        storename = self.store_name
 
-        # Confirm the deletion
         confirm = messagebox.askyesno(
             "Confirm Deletion",
             f"Are you sure you want to delete {name} from {storename}?"
         )
 
         if confirm:
+            conn = None
+            cursor = None
             try:
                 conn = get_connection()
                 cursor = conn.cursor()
-                cursor.execute("DELETE FROM staff WHERE name = %s AND storename = %s", (name, storename))
+                conn.start_transaction()
+
+                cursor.execute(
+                    "DELETE FROM staff WHERE name = %s AND storename = %s",
+                    (name, storename)
+                )
+
                 conn.commit()
                 cursor.close()
                 conn.close()
 
                 messagebox.showinfo("Success", f"Staff member {name} deleted successfully!")
-                self.fetch_staff_data()  # Refresh the Treeview
+                self.fetch_staff_data()
+
             except Error as e:
+                if conn:
+                    conn.rollback()
                 messagebox.showerror("Error", f"Failed to delete staff member: {e}")
+            finally:
+                if cursor:
+                    cursor.close()
+                if conn:
+                    conn.close()
 
     def edit_row(self):
         selected_item = self.tree.selection()
@@ -233,9 +254,13 @@ class StaffScreen(tk.Frame):
 
             name, role, hourlyrate, bonusrate, password = new_values
 
+            conn = None
+            cursor = None
             try:
                 conn = get_connection()
                 cursor = conn.cursor()
+                conn.start_transaction()
+
                 cursor.execute("""
                     UPDATE staff
                     SET role = %s,
@@ -244,15 +269,21 @@ class StaffScreen(tk.Frame):
                         password = %s
                     WHERE name = %s AND storename = %s
                 """, (role, hourlyrate, bonusrate, password, name, self.store_name))
-                conn.commit()
-                cursor.close()
-                conn.close()
 
+                conn.commit()
                 messagebox.showinfo("Success", "Staff member updated successfully.")
                 self.fetch_staff_data()
                 edit_window.destroy()
+
             except Error as e:
+                if conn:
+                    conn.rollback()
                 messagebox.showerror("Database Error", f"Failed to update staff: {e}")
+            finally:
+                if cursor:
+                    cursor.close()
+                if conn:
+                    conn.close()
 
         save_button = ttk.Button(edit_window, text="Save", command=save_changes)
         save_button.grid(row=len(labels), columnspan=2, pady=10)

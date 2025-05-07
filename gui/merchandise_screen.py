@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from datetime import datetime
 from db import get_connection
+from mysql.connector import Error
 
 class MerchandiseScreen(tk.Frame):
     def __init__(self, master, store_name, user, previous_screen, selected_month=None, selected_year=None):
@@ -131,22 +132,32 @@ class MerchandiseScreen(tk.Frame):
                 messagebox.showerror("Input Error", "Value must be a number.")
                 return
 
-            # Insert into DB
+            conn = None
+            cursor = None
             try:
                 conn = get_connection()
                 cursor = conn.cursor()
+                conn.start_transaction()  # Begin transaction
+
                 cursor.execute("""
                     INSERT INTO merchandise (storename, merchtype, merchvalue, date)
                     VALUES (%s, %s, %s, %s)
                 """, (self.store_name, merch_type, merch_value, date))
-                conn.commit()
-            finally:
-                cursor.close()
-                conn.close()
 
-            messagebox.showinfo("Success", "New merchandise record added successfully!")
-            self.fetch_merchandise_data()  # Refresh table
-            add_window.destroy()
+                conn.commit()  # Commit if successful
+
+                messagebox.showinfo("Success", "New merchandise record added successfully!")
+                self.fetch_merchandise_data()  # Refresh table
+                add_window.destroy()
+            except Error as e:
+                if conn:
+                    conn.rollback()  # Rollback on error
+                messagebox.showerror("Error", f"Error adding merchandise data: {e}")
+            finally:
+                if cursor:
+                    cursor.close()
+                if conn:
+                    conn.close()
 
         save_btn = ttk.Button(add_window, text="Save", command=save_entry)
         save_btn.pack(pady=10)
@@ -169,20 +180,30 @@ class MerchandiseScreen(tk.Frame):
         if not confirm:
             return
 
+        conn = None
+        cursor = None
         try:
             conn = get_connection()
             cursor = conn.cursor()
+            conn.start_transaction()  # Begin transaction
+
             cursor.execute("DELETE FROM merchandise WHERE id = %s", (row_id,))
-            conn.commit()
-            cursor.close()
-            conn.close()
+            conn.commit()  # Commit if successful
 
             # Remove from Treeview and refresh
             self.tree.delete(selected_item)
             self.fetch_merchandise_data()
             messagebox.showinfo("Success", "Merchandise record deleted successfully!")
+
         except Exception as e:
+            if conn:
+                conn.rollback()  # Rollback on failure
             messagebox.showerror("Error", f"Failed to delete merchandise record: {e}")
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
 
     def edit_row(self):
         """Open the edit dialog for the selected merchandise record."""
@@ -262,9 +283,13 @@ class MerchandiseScreen(tk.Frame):
         Update an existing merchandise record.
         new_values should be a tuple: (date: date, merchtype: str, merchvalue: float)
         """
+        conn = None
+        cursor = None
         try:
             conn = get_connection()
             cursor = conn.cursor()
+            conn.start_transaction()  # Start a transaction
+
             cursor.execute("""
                 UPDATE merchandise
                 SET date = %s,
@@ -272,14 +297,20 @@ class MerchandiseScreen(tk.Frame):
                     merchvalue = %s
                 WHERE id = %s
             """, (*new_values, record_id))
-            conn.commit()
-            cursor.close()
-            conn.close()
 
+            conn.commit()  # Commit the changes
             messagebox.showinfo("Success", "Merchandise record updated successfully!")
             self.fetch_merchandise_data()  # Refresh the table
+
         except Exception as e:
+            if conn:
+                conn.rollback()  # Rollback if there was an error
             messagebox.showerror("Error", f"Error updating merchandise data: {e}")
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
 
     def fetch_merchandise_data(self):
         try:

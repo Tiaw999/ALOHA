@@ -58,8 +58,8 @@ class CloseStore(tk.Frame):
         try:
             connection = get_connection()
             cursor = connection.cursor()
+            connection.start_transaction()
 
-            # Insert into revenue table
             query = """
                 INSERT INTO revenue (storename, reg, credit, cashinenvelope)
                 VALUES (%s, %s, %s, %s)
@@ -67,16 +67,22 @@ class CloseStore(tk.Frame):
             cursor.execute(query, (self.store_name, reg, credit, cash))
             connection.commit()
 
-            cursor.close()
-            connection.close()
-
-            messagebox.showinfo("Success", "Closing data submitted successfully!")
+            # Only clear if commit succeeded
             self.reg_entry.delete(0, tk.END)
             self.credit_entry.delete(0, tk.END)
             self.cash_entry.delete(0, tk.END)
+            messagebox.showinfo("Success", "Closing data submitted successfully!")
 
         except mysql.connector.Error as err:
+            if connection:
+                connection.rollback()
             messagebox.showerror("Database Error", f"Error: {err}")
+
+        finally:
+            if cursor:
+                cursor.close()
+            if connection:
+                connection.close()
 
     def go_back(self):
         if self.previous_screen:

@@ -58,21 +58,27 @@ class LogExpenses(tk.Frame):
         try:
             connection = get_connection()
             cursor = connection.cursor()
+            connection.start_transaction()  # Explicitly start transaction
 
             cursor.execute(
                 "INSERT INTO expenses (storename, expensetype, expensevalue) VALUES (%s, %s, %s)",
                 (self.store_name, exp_type, amount)
             )
-            connection.commit()
-            cursor.close()
-            connection.close()
+
+            connection.commit()  # Only commits if all queries succeed
 
             self.expense_type_entry.delete(0, tk.END)
             self.expense_amount_entry.delete(0, tk.END)
             messagebox.showinfo("Success", "Expense submitted successfully!")
 
         except mysql.connector.Error as err:
+            if connection:
+                connection.rollback()  # Roll back any partial changes
             messagebox.showerror("Database Error", f"Error: {err}")
+
+        finally:
+            if cursor: cursor.close()
+            if connection: connection.close()
 
 # Launch function
 def run_log_expenses(root, store_name, previous_screen_callback):

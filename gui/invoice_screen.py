@@ -3,7 +3,9 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from datetime import datetime
 from db import get_connection
+import mysql.connector
 from mysql.connector import Error
+
 
 class InvoiceScreen(tk.Frame):
     def __init__(self, master, store_name, user, previous_screen, selected_month=None, selected_year=None, owner_name=None):
@@ -149,10 +151,10 @@ class InvoiceScreen(tk.Frame):
                     date_paid = datetime.strptime(date_paid, "%Y-%m-%d").date()
                 else:
                     date_paid = None
-                    # Check if the entered date is within the selected month and year
+
                 if date_received.month != self.selected_month or date_received.year != self.selected_year:
                     messagebox.showerror("Date Error",
-                                    f"Please enter invoices received within {self.selected_month}/{self.selected_year}.")
+                                         f"Please enter invoices received within {self.selected_month}/{self.selected_year}.")
                     return
             except ValueError:
                 messagebox.showerror("Date Error", "Please use YYYY-MM-DD format for dates.")
@@ -171,11 +173,14 @@ class InvoiceScreen(tk.Frame):
             try:
                 conn = get_connection()
                 cursor = conn.cursor()
+                conn.start_transaction()
+
                 cursor.execute("""
                     INSERT INTO invoices (invoicenum, storename, datereceived, company, amount, duedate, paid, datepaid, paidwith)
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (invoicenum, self.store_name, date_received, company, amount, due_date, paid == "true", date_paid,
                       paid_with))
+
                 conn.commit()
                 cursor.close()
                 conn.close()
@@ -185,6 +190,8 @@ class InvoiceScreen(tk.Frame):
                 add_window.destroy()
 
             except Error as e:
+                if conn:
+                    conn.rollback()
                 messagebox.showerror("Error", f"Error adding invoice: {e}")
 
     def delete_row(self):
@@ -192,18 +199,27 @@ class InvoiceScreen(tk.Frame):
         if not sel:
             messagebox.showwarning("Select Error", "Please select a row.")
             return
+
         inv = self.tree.item(sel, "values")[0]
-        if not messagebox.askyesno("Confirm", f"Delete invoice {inv}? "): return
+        if not messagebox.askyesno("Confirm", f"Delete invoice {inv}?"):
+            return
+
         try:
             conn = get_connection()
             cur = conn.cursor()
+            conn.start_transaction()
+
             cur.execute("DELETE FROM invoices WHERE invoicenum = %s", (inv,))
             conn.commit()
+
             cur.close()
             conn.close()
+
             self.fetch_invoice_data()
             messagebox.showinfo("Deleted", "Invoice deleted.")
         except Exception as e:
+            if conn:
+                conn.rollback()
             messagebox.showerror("Error", f"Error deleting invoice: {e}")
 
     def edit_row(self):
@@ -279,11 +295,6 @@ class InvoiceScreen(tk.Frame):
                 messagebox.showerror("Input Error", "Amount must be a valid number.")
                 return
 
-            # === Validate Paid field ===
-            if new_values[4].lower() not in ["true", "false"]:
-                messagebox.showerror("Input Error", "Paid must be True or False.")
-                return
-
             # === Handle Paid With ===
             new_values[6] = new_values[6].upper() if new_values[6] else None
 
@@ -294,27 +305,36 @@ class InvoiceScreen(tk.Frame):
         save_button = ttk.Button(edit_window, text="Save", command=save_changes)
         save_button.grid(row=len(labels), columnspan=2, pady=10)
 
-    def update_invoice_data(self, invoicenum, new_values):
+    def update_invoice_data(self, invoice_id, values):
         try:
             conn = get_connection()
             cursor = conn.cursor()
+            conn.start_transaction()
 
-            cursor.execute("""
+            update_query = """
                 UPDATE invoices
-                SET datereceived = %s, company = %s, amount = %s, duedate = %s,
-                    paid = %s, datepaid = %s, paidwith = %s
+                SET datereceived = %s,
+                    company = %s,
+                    amount = %s,
+                    duedate = %s,
+                    paid = %s,
+                    datepaid = %s,
+                    paidwith = %s
                 WHERE invoicenum = %s
-            """, (*new_values, invoicenum))
-
+            """
+            cursor.execute(update_query, (*values, invoice_id))
             conn.commit()
+
             cursor.close()
             conn.close()
 
-            messagebox.showinfo("Success", "Invoice record updated successfully!")
-            self.fetch_invoice_data()  # Refresh table
+            self.fetch_invoice_data()
+            messagebox.showinfo("Success", "Invoice updated successfully!")
 
-        except Error as e:
-            messagebox.showerror("Error", f"Error updating invoice data: {e}")
+        except mysql.connector.Error as err:
+            if conn:
+                conn.rollback()
+            messagebox.showerror("Database Error", f"Error updating invoice: {err}")
 
     def fetch_invoice_data(self):
         try:

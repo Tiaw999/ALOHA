@@ -113,66 +113,75 @@ class ExpensesScreen(tk.Frame):
             expensevalue = value_entry.get().strip()
 
             try:
-                # Try to parse the date
                 date = datetime.strptime(date_str, "%Y-%m-%d").date()
-
-                # Check if the entered date is within the selected month and year
                 if date.month != self.selected_month or date.year != self.selected_year:
                     messagebox.showerror("Date Error",
                                          f"Please enter a date within {self.selected_month}/{self.selected_year}.")
                     return
-
             except ValueError:
-                # If the date is not valid, show an error message
                 messagebox.showerror("Date Error", "Invalid date format. Please use YYYY-MM-DD.")
                 return
 
+            conn = None
+            cursor = None
             try:
                 conn = get_connection()
                 cursor = conn.cursor()
+                conn.start_transaction()
+
                 cursor.execute("""
                     CALL insert_expense(%s, %s, %s, %s);
                 """, (self.store_name, expensetype, expensevalue, date))
-                conn.commit()
-                cursor.close()
-                conn.close()
 
+                conn.commit()
                 messagebox.showinfo("Success", "New expense record added successfully!")
                 add_window.destroy()
-                self.fetch_expense_data()  # Refresh table
+                self.fetch_expense_data()
             except Error as e:
-                # If there's an error, show it in a messagebox
+                if conn:
+                    conn.rollback()
                 messagebox.showerror("Error", f"Error adding expense data: {e}")
+            finally:
+                if cursor:
+                    cursor.close()
+                if conn:
+                    conn.close()
 
     def delete_row(self):
         """ Deletes a selected expense row from the Treeview and the database """
-        selected_item = self.tree.selection()  # Get the selected item
+        selected_item = self.tree.selection()
 
         if not selected_item:
             messagebox.showwarning("Selection Error", "Please select a row to delete.")
             return
 
-        # Get the ID of the selected row (assuming ID is in the first column)
         row_id = self.tree.item(selected_item, "values")[0]
 
-        # Confirm the deletion with the user
         confirm = messagebox.askyesno("Confirm Deletion",
                                       f"Are you sure you want to delete the expense record with ID {row_id}?")
 
         if confirm:
+            conn = None
+            cursor = None
             try:
                 conn = get_connection()
                 cursor = conn.cursor()
+                conn.start_transaction()
+
                 cursor.execute("DELETE FROM expenses WHERE id = %s", (row_id,))
+
                 conn.commit()
-
-                cursor.close()
-                conn.close()
-
                 messagebox.showinfo("Success", "Expense record deleted successfully!")
-                self.fetch_expense_data()  # Refresh table
+                self.fetch_expense_data()
             except Error as e:
+                if conn:
+                    conn.rollback()
                 messagebox.showerror("Error", f"Failed to delete expense record: {e}")
+            finally:
+                if cursor:
+                    cursor.close()
+                if conn:
+                    conn.close()
 
     def edit_row(self):
         selected_item = self.tree.selection()
@@ -232,24 +241,35 @@ class ExpensesScreen(tk.Frame):
         save_button = ttk.Button(edit_window, text="Save", command=save_changes)
         save_button.grid(row=len(labels), columnspan=2, pady=10)
 
+    from mysql.connector import Error  # Ensure this is imported
+
     def update_expense_data(self, record_id, new_values, edit_window):
+        conn = None
+        cursor = None
         try:
             conn = get_connection()
             cursor = conn.cursor()
+            conn.start_transaction()
 
             cursor.execute("""
                 CALL update_expense(%s, %s, %s, %s)
             """, (record_id, *new_values))
 
             conn.commit()
-            cursor.close()
-            conn.close()
 
             messagebox.showinfo("Success", "Expense record updated successfully!")
             edit_window.destroy()
-            self.fetch_expense_data()  # Refresh table
+            self.fetch_expense_data()
+
         except Error as e:
+            if conn:
+                conn.rollback()
             messagebox.showerror("Error", f"Error updating expense data: {e}")
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
 
     def get_selected_month_year(self):
         return self.selected_month, self.selected_year

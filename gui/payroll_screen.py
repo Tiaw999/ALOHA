@@ -9,7 +9,7 @@ from db import get_connection
 class PayrollScreen(tk.Frame):
     def __init__(self, master, store_name, user, previous_screen, selected_month=None, selected_year=None):
         super().__init__(master)
-        self.columns = ("ID", "Employee Name", "Store", "Regular Pay", "Bonus", "Pay Date")
+        self.columns = ("ID", "Employee Name", "Regular Pay", "Bonus", "Pay Date")
         self.master = master
         self.store_name = store_name
         self.user = user
@@ -38,7 +38,7 @@ class PayrollScreen(tk.Frame):
 
 
         # Table (Treeview)
-        self.columns = ("ID", "Employee Name", "Store", "Regular Pay", "Bonus", "Pay Date")
+        self.columns = ("ID", "Employee Name", "Regular Pay", "Bonus", "Pay Date")
         self.tree = ttk.Treeview(self, columns=self.columns, show="headings")
 
         for col in self.columns:
@@ -146,7 +146,6 @@ class PayrollScreen(tk.Frame):
 
         try:
             paydate = datetime.strptime(paydate_str, "%Y-%m-%d").date()
-            # Check if the entered date is within the selected month and year
             if paydate.month != self.selected_month or paydate.year != self.selected_year:
                 messagebox.showerror("Date Error",
                                      f"Please enter a date within {self.selected_month}/{self.selected_year}.")
@@ -156,61 +155,77 @@ class PayrollScreen(tk.Frame):
             return
 
         try:
-            float(regularpay)
-            float(bonus)
+            regularpay = float(regularpay)
+            bonus = float(bonus)
         except ValueError:
             messagebox.showerror("Input Error", "Regular Pay and Bonus must be numbers.")
             return
 
-        # Attempt to save to database
+        conn = None
+        cursor = None
         try:
             conn = get_connection()
             cursor = conn.cursor()
+            conn.start_transaction()  # Start a transaction
+
             cursor.execute("""
                 INSERT INTO payroll (empname, storename, regularpay, bonus, paydate)
                 VALUES (%s, %s, %s, %s, %s)
             """, (empname, self.store_name, regularpay, bonus, paydate))
-            conn.commit()
-            cursor.close()
-            conn.close()
 
+            conn.commit()
             messagebox.showinfo("Success", "New payroll record added successfully!")
-            self.fetch_payroll_data()  # Refresh table
-            add_window.destroy()  # Close the modal window after saving
+            self.fetch_payroll_data()
+            add_window.destroy()
 
         except Error as e:
+            if conn:
+                conn.rollback()
             messagebox.showerror("Error", f"Error adding payroll data: {e}")
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
 
     def delete_row(self):
         """ Deletes a selected row from the Treeview and the database """
-        selected_item = self.tree.selection()  # Get the selected item
+        selected_item = self.tree.selection()
 
         if not selected_item:
             messagebox.showwarning("Selection Error", "Please select a row to delete.")
             return
 
-        # Get the ID of the selected row (assuming ID is in the first column)
-        row_id = self.tree.item(selected_item, "values")[0]  # Assuming ID is the first value in the row
+        row_id = self.tree.item(selected_item, "values")[0]  # Assuming ID is the first value
 
-        # Confirm the deletion with the user
         confirm = messagebox.askyesno("Confirm Deletion",
                                       f"Are you sure you want to delete the record with ID {row_id}?")
+        if not confirm:
+            return
 
-        if confirm:
-            try:
-                conn = get_connection()
-                cursor = conn.cursor()
-                # Delete the row with the corresponding ID from the payroll table
-                cursor.execute("DELETE FROM payroll WHERE id = %s", (row_id,))
-                conn.commit()
+        conn = None
+        cursor = None
+        try:
+            conn = get_connection()
+            cursor = conn.cursor()
+            conn.start_transaction()  # Start transaction
 
+            cursor.execute("DELETE FROM payroll WHERE id = %s", (row_id,))
+            conn.commit()
+
+            self.tree.delete(selected_item)
+            self.fetch_payroll_data()
+            messagebox.showinfo("Success", "Row deleted successfully!")
+
+        except Error as e:
+            if conn:
+                conn.rollback()
+            messagebox.showerror("Error", f"Failed to delete row: {e}")
+        finally:
+            if cursor:
                 cursor.close()
+            if conn:
                 conn.close()
-
-                messagebox.showinfo("Success", "Row deleted successfully!")
-                self.fetch_payroll_data()  # Refresh table
-            except Error as e:
-                messagebox.showerror("Error", f"Failed to delete row: {e}")
 
     def edit_row(self):
         selected_item = self.tree.selection()
@@ -229,7 +244,7 @@ class PayrollScreen(tk.Frame):
         edit_window = tk.Toplevel(self)
         edit_window.title("Edit Payroll Entry")
 
-        labels = ["Employee Name", "Store Name", "Regular Pay", "Bonus", "Pay Date"]
+        labels = ["Employee Name", "Regular Pay", "Bonus", "Pay Date"]
         entries = []
 
         # Create form frame inside the new window
@@ -265,22 +280,22 @@ class PayrollScreen(tk.Frame):
         self.empname_dropdown.grid(row=0, column=1, padx=10, pady=5)
 
         # Loop through the rest of the fields
-        for i, (label_text, value) in enumerate(
-                zip(labels[1:], row_values[2:])):  # Skip the first value (ID and Employee)
+        for i, (label_text, value) in enumerate(zip(labels[1:], row_values[2:])):
             tk.Label(self.form_frame, text=label_text).grid(row=i + 1, column=0, padx=10, pady=5)
             entry = tk.Entry(self.form_frame)
 
-            # If it's the pay date (i == 4), format it
-            if i == 3:  # Pay date is at index 3 in labels
-                value = value.split(" ")[0]  # Handle "YYYY-MM-DD 00:00:00"
+            if label_text == "Pay Date" and isinstance(value, str):
+                value = value.split(" ")[0]
+            elif label_text == "Pay Date" and hasattr(value, "strftime"):
+                value = value.strftime("%Y-%m-%d")
 
-            entry.insert(0, value)  # Pre-fill with existing data
+            entry.insert(0, value)
             entry.grid(row=i + 1, column=1, padx=10, pady=5)
             entries.append(entry)
 
         # Save button
         save_button = ttk.Button(self.form_frame, text="Save Entry",
-                                 command=lambda: self.save_edited_entry(item_id, entries))
+                                 command=lambda: save_changes())
         save_button.grid(row=len(labels), columnspan=2, pady=10)
 
         edit_window.grab_set()  # Make window modal
@@ -290,14 +305,14 @@ class PayrollScreen(tk.Frame):
             new_values = [entry.get() for entry in entries]
 
             # === Validate Input Fields ===
-            for field_value, field_name in zip(new_values[:4], ["Employee Name", "Store Name", "Regular Pay", "Bonus"]):
+            for field_value, field_name in zip(new_values[:4], ["Regular Pay", "Bonus", "Pay Date"]):
                 if not field_value.strip():
                     messagebox.showwarning("Input Error", f"{field_name} is required.")
                     return
 
             try:
                 # Validate Pay Date
-                paydate = datetime.strptime(new_values[4], "%Y-%m-%d").date()
+                paydate = datetime.strptime(new_values[2], "%Y-%m-%d").date()
                 # Check if the entered date is within the selected month and year
                 if paydate.month != self.selected_month or paydate.year != self.selected_year:
                     messagebox.showerror("Date Error",
@@ -308,8 +323,8 @@ class PayrollScreen(tk.Frame):
 
             try:
                 # Validate Regular Pay and Bonus as numbers
-                float(new_values[2])  # Regular Pay
-                float(new_values[3])  # Bonus
+                float(new_values[0])  # Regular Pay
+                float(new_values[1])  # Bonus
             except ValueError:
                 messagebox.showerror("Input Error", "Regular Pay and Bonus must be valid numbers.")
                 return
@@ -318,30 +333,34 @@ class PayrollScreen(tk.Frame):
             self.update_payroll_data(item_id, new_values)
             edit_window.destroy()
 
-        save_button = ttk.Button(edit_window, text="Save", command=save_changes)
-        save_button.grid(row=len(labels), columnspan=2, pady=10)
-
     def update_payroll_data(self, record_id, new_values):
+        conn = None
+        cursor = None
         try:
             conn = get_connection()
             cursor = conn.cursor()
+            conn.start_transaction()  # Start transaction
 
             cursor.execute("""
                 UPDATE payroll 
-                SET empname = %s, storename = %s, regularpay = %s, bonus = %s, paydate = %s
+                SET regularpay = %s, bonus = %s, paydate = %s
                 WHERE id = %s
-            """, (*new_values, record_id))
+            """, (float(new_values[0]), float(new_values[1]), new_values[2], record_id))
 
             conn.commit()
 
-            cursor.close()
-            conn.close()
-
             messagebox.showinfo("Success", "Payroll record updated successfully!")
-            self.fetch_payroll_data()  # Refresh table with updated data
+            self.fetch_payroll_data()  # Refresh table
 
         except Error as e:
+            if conn:
+                conn.rollback()
             messagebox.showerror("Error", f"Error updating payroll data: {e}")
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
 
     def get_selected_month_year(self):
         return self.selected_month, self.selected_year
@@ -359,7 +378,7 @@ class PayrollScreen(tk.Frame):
 
             # Base query to fetch payroll data for the store and date
             query = """
-                SELECT id, empname, storename, regularpay, bonus, paydate 
+                SELECT id, empname, regularpay, bonus, paydate 
                 FROM payroll 
                 WHERE storename = %s
                 AND MONTH(paydate) = %s AND YEAR(paydate) = %s

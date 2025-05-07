@@ -67,6 +67,8 @@ class LogHours(tk.Frame):
         try:
             connection = get_connection()
             cursor = connection.cursor()
+            connection.start_transaction()
+
             cursor.execute(
                 """
                 INSERT INTO timesheet (storename, empname, clock_in, clock_out, regin, regout)
@@ -75,16 +77,22 @@ class LogHours(tk.Frame):
                 (self.store_name, self.user, clock_in, clock_out, regin_val, regout_val)
             )
             connection.commit()
-            cursor.close()
-            connection.close()
 
-            messagebox.showinfo("Success", "Hours and balances logged successfully!")
-
+            # Only clear if commit succeeded
             for entry in self.entries.values():
                 entry.delete(0, tk.END)
+            messagebox.showinfo("Success", "Hours and balances logged successfully!")
 
         except mysql.connector.Error as err:
+            if connection:
+                connection.rollback()
             messagebox.showerror("Database Error", f"Error: {err}")
+
+        finally:
+            if cursor:
+                cursor.close()
+            if connection:
+                connection.close()
 
     def go_back(self):
         self.master.switch_screen(self.previous_screen.__class__, self.store_name, self.user)

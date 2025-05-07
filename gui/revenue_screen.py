@@ -3,6 +3,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from datetime import datetime
 from db import get_connection
+from mysql.connector import Error
 
 class RevenueScreen(tk.Frame):
     def __init__(self, master, store_name, user, previous_screen, selected_month=None, selected_year=None):
@@ -141,25 +142,34 @@ class RevenueScreen(tk.Frame):
                 messagebox.showerror("Input Error", "Reg, Credit, and Cash in Envelope must be numbers.")
                 return
 
+            conn = None
+            cursor = None
             try:
                 conn = get_connection()
                 cursor = conn.cursor()
+                conn.start_transaction()
+
                 cursor.execute("""
                     INSERT INTO revenue (storename, reg, credit, cashinenvelope, date)
                     VALUES (%s, %s, %s, %s, %s)
                 """, (self.store_name, reg, credit, cash_in_envelope, date))
+
                 conn.commit()
-                cursor.close()
-                conn.close()
 
                 messagebox.showinfo("Success", "New revenue record added successfully!")
                 self.fetch_revenue_data()  # Refresh table
                 add_window.destroy()  # Close window after saving
 
             except Error as e:
+                if conn:
+                    conn.rollback()
                 messagebox.showerror("Error", f"Error adding revenue data: {e}")
+            finally:
+                if cursor:
+                    cursor.close()
+                if conn:
+                    conn.close()
 
-    # Delete Row Function
     def delete_row(self):
         """ Deletes a selected row from the Treeview and the database """
         selected_item = self.tree.selection()  # Get the selected item
@@ -176,20 +186,28 @@ class RevenueScreen(tk.Frame):
                                       f"Are you sure you want to delete the record with ID {row_id}?")
 
         if confirm:
+            conn = None
+            cursor = None
             try:
                 conn = get_connection()
                 cursor = conn.cursor()
+                conn.start_transaction()  # Begin the transaction
+
                 # Delete the row with the corresponding ID
                 cursor.execute("DELETE FROM revenue WHERE id = %s", (row_id,))
-                conn.commit()
-
-                cursor.close()
-                conn.close()
+                conn.commit()  # Commit the transaction
 
                 messagebox.showinfo("Success", "Row deleted successfully!")
                 self.fetch_revenue_data()  # Refresh table
             except Error as e:
+                if conn:
+                    conn.rollback()  # Rollback in case of an error
                 messagebox.showerror("Error", f"Failed to delete row: {e}")
+            finally:
+                if cursor:
+                    cursor.close()
+                if conn:
+                    conn.close()
 
     def edit_row(self):
         selected_item = self.tree.selection()
@@ -259,26 +277,34 @@ class RevenueScreen(tk.Frame):
         save_button.grid(row=len(labels), columnspan=2, pady=10)
 
     def update_revenue_data(self, record_id, new_values):
+        """ Updates revenue data in the database with transaction handling """
+        conn = None
+        cursor = None
         try:
             conn = get_connection()
             cursor = conn.cursor()
+            conn.start_transaction()  # Begin the transaction
 
+            # Execute the update statement
             cursor.execute("""
                 UPDATE revenue 
                 SET date = %s, reg = %s, credit = %s, cashinenvelope = %s 
                 WHERE id = %s
             """, (*new_values, record_id))
 
-            conn.commit()
-
-            cursor.close()
-            conn.close()
+            conn.commit()  # Commit the transaction
 
             messagebox.showinfo("Success", "Revenue record updated successfully!")
             self.fetch_revenue_data()  # Refresh table
-
         except Error as e:
+            if conn:
+                conn.rollback()  # Rollback in case of an error
             messagebox.showerror("Error", f"Error updating revenue data: {e}")
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
 
     def get_selected_month_year(self):
         return self.selected_month, self.selected_year
