@@ -2,9 +2,7 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
-import db  # Make sure to import the db module where get_stores is defined
-
-# Import your home screen modules
+import db
 from gui.owner_home import OwnerHome
 from gui.manager_home import ManagerHome
 from gui.employee_home import EmployeeHome

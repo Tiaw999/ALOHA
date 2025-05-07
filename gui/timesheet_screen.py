@@ -3,6 +3,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from datetime import datetime
 from db import get_connection
+from mysql.connector import Error
 
 class TimesheetScreen(tk.Frame):
     def __init__(self, master, store_name, user, previous_screen, selected_month=None, selected_year=None):
